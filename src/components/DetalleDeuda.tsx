@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import axios from 'axios';
 import {
   Dialog,
@@ -43,7 +43,7 @@ function DetalleDeuda({ open, onClose, idCredito, garantes, proximoVencimiento, 
       field: 'monto_original',
       headerName: 'Monto Original',
       width: 150,
-      valueFormatter: (params) => {
+      valueFormatter: (params: { value: number | null }) => {
         if (params.value != null) {
           return `$${params.value.toLocaleString('es-AR')}`;
         }
@@ -54,7 +54,7 @@ function DetalleDeuda({ open, onClose, idCredito, garantes, proximoVencimiento, 
       field: 'debe',
       headerName: 'Debe',
       width: 150,
-      valueFormatter: (params) => {
+      valueFormatter: (params: { value: number | null }) => {
         if (params.value != null) {
           return `$${params.value.toLocaleString('es-AR')}`;
         }
@@ -65,7 +65,7 @@ function DetalleDeuda({ open, onClose, idCredito, garantes, proximoVencimiento, 
       field: 'vencimiento',
       headerName: 'Vencimiento',
       width: 150,
-      valueFormatter: (params) => {
+      renderCell: (params: GridRenderCellParams) => {
         if (params.value) {
           return new Date(params.value).toLocaleDateString();
         }

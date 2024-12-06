@@ -85,8 +85,8 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {detalles.map((detalle) => (
-                      <TableRow key={detalle.nro_transaccion}>
+                    {detalles.map((detalle, index) => (
+                      <TableRow key={`${detalle.nro_transaccion}-${index}`}>
                         <TableCell>{detalle.periodo}</TableCell>
                         <TableCell>{detalle.concepto}</TableCell>
                         <TableCell align="right">${detalle.montoOriginal.toLocaleString('es-AR')}</TableCell>

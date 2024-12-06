@@ -41,7 +41,7 @@ function App() {
   const fetchCreditos = async () => {
     try {
       const response = await axios.get(
-        'http://10.0.0.24/webapicreditos24/CM_Credito_materiales/GetCreditoMPaginado',
+        `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/GetCreditoMPaginado`,
         {
           params: {
             buscarPor: 'legajo',
@@ -52,16 +52,13 @@ function App() {
       );
 
       if (Array.isArray(response.data.resultado)) {
-        console.log('Primer crédito:', response.data.resultado[0]);
         const creditosFormateados = response.data.resultado.map((credito: Credito) => {
-          console.log('Procesando crédito:', credito);
           return {
             ...credito,
             presupuesto: Number(credito.presupuesto),
             presupuesto_uva: Number(credito.presupuesto_uva)
           };
         });
-        console.log('Créditos formateados:', creditosFormateados);
         setCreditos(creditosFormateados);
       }
     } catch (error) {
@@ -117,7 +114,6 @@ function App() {
       headerName: 'Acciones',
       width: 100,
       renderCell: (params) => {
-        console.log('Próximo vencimiento:', params.row.proximo_vencimiento);
         return (
           <IconButton
             onClick={() => {

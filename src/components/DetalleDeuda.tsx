@@ -28,11 +28,10 @@ interface Deuda {
   vencimiento: string;
   desCategoria: string;
   pagado: number;
-  nroTtransaccion: number;
+  nro_transaccion: number;
 }
 
 function DetalleDeuda({ open, onClose, idCredito, garantes, proximoVencimiento, saldoAdeudado, valorCuotaUva }: DetalleDeudaProps) {
-  console.log('Próximo vencimiento en DetalleDeuda:', proximoVencimiento); // Para debug
 
   const [deudas, setDeudas] = useState<Deuda[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,7 +78,7 @@ function DetalleDeuda({ open, onClose, idCredito, garantes, proximoVencimiento, 
     const fetchDeudas = async () => {
       try {
         const response = await axios.get(
-          `http://10.0.0.24/webapicreditos24/CM_Ctasctes/getListDeudaCredito`,
+          `${import.meta.env.VITE_API_BASE_URL}CM_Ctasctes/getListDeudaCredito`,
           { params: { id_credito_materiales: idCredito } }
         );
         setDeudas(response.data);
@@ -132,7 +131,7 @@ function DetalleDeuda({ open, onClose, idCredito, garantes, proximoVencimiento, 
           <DataGrid
             rows={deudas}
             columns={columns}
-            getRowId={(row) => row.nroTtransaccion}
+            getRowId={(row) => row.nro_transaccion}
             loading={loading}
             pageSizeOptions={[5, 10]}
             initialState={{

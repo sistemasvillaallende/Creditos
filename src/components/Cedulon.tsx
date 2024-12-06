@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface CedulonProps {
   open: boolean;
@@ -45,7 +47,7 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
         setCabecera(cabResponse.data);
         setDetalles(detResponse.data);
       } catch (error) {
-        console.error('Error al cargar datos del cedulón:', error);
+        console.error('Error al cargar datos del cedul��n:', error);
       } finally {
         setLoading(false);
       }
@@ -55,6 +57,46 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
       fetchCedulonData();
     }
   }, [open, nroCedulon]);
+
+  const generarPDF = () => {
+    const doc = new jsPDF();
+
+    // Configuración inicial
+    doc.setFont('helvetica');
+    doc.setFontSize(16);
+
+    // Encabezado
+    doc.text(`Cedulón #${nroCedulon}`, 15, 20);
+
+    // Datos del contribuyente
+    doc.setFontSize(12);
+    doc.text('Datos del Contribuyente:', 15, 40);
+    doc.setFontSize(10);
+    doc.text(`Nombre: ${cabecera?.nombre}`, 15, 50);
+    doc.text(`CUIT: ${cabecera?.cuit}`, 15, 60);
+    doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, 15, 70);
+    doc.text(`Monto a Pagar: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, 15, 80);
+
+    // Tabla de detalles
+    autoTable(doc, {
+      startY: 90,
+      head: [['Período', 'Concepto', 'Monto Original', 'Recargo', 'Total']],
+      body: detalles.map(detalle => [
+        detalle.periodo,
+        detalle.concepto,
+        `$${detalle.montoOriginal.toLocaleString('es-AR')}`,
+        `$${detalle.recargo.toLocaleString('es-AR')}`,
+        `$${detalle.descInteres.toLocaleString('es-AR')}`
+      ]),
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [66, 66, 66] },
+      margin: { top: 15 },
+      theme: 'grid'
+    });
+
+    // Guardar PDF
+    doc.save(`Cedulon_${nroCedulon}.pdf`);
+  };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -103,7 +145,11 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cerrar</Button>
-        <Button variant="contained" color="primary">
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={generarPDF}
+        >
           Imprimir
         </Button>
       </DialogActions>

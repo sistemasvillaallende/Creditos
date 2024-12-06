@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   TextField,
   Autocomplete,
@@ -55,7 +55,7 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
     }
   };
 
-  const handleCuitChange = (event: any, newValue: BadecData | null) => {
+  const handleCuitChange = (_: React.SyntheticEvent, newValue: BadecData | null) => {
     if (newValue) {
       setFormData({
         ...formData,
@@ -140,7 +140,7 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
           options={cuitOptions}
           getOptionLabel={(option) => `${option.cuit} - ${option.nombre}`}
           loading={loading}
-          onInputChange={(event, newInputValue) => {
+          onInputChange={(_, newInputValue) => {
             fetchBadecData(newInputValue);
           }}
           onChange={handleCuitChange}

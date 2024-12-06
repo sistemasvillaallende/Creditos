@@ -11,7 +11,6 @@ import {
   Button,
   Grid
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
 import Cedulon from './Cedulon';
 
 interface DetalleDeudaProps {
@@ -39,7 +38,7 @@ interface Deuda {
 function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proximoVencimiento, saldoAdeudado, valorCuotaUva }: DetalleDeudaProps) {
 
   const [deudas, setDeudas] = useState<Deuda[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [selectedDeudas, setSelectedDeudas] = useState<Deuda[]>([]);
   const [showCedulon, setShowCedulon] = useState(false);
   const [nroCedulon, setNroCedulon] = useState<number | null>(null);
@@ -108,64 +107,47 @@ function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proxim
     }
 
     try {
-      // Encontrar la fecha de vencimiento ms lejana
-      const maxVencimiento = selectedDeudas.reduce((maxDate, deuda) => {
-        const [day, month, year] = deuda.vencimiento.split('/');
-        const currentDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-        return currentDate > maxDate ? currentDate : maxDate;
-      }, new Date(2000, 0, 1));
-
-      const formattedVencimiento = `${maxVencimiento.getDate()}/${maxVencimiento.getMonth() + 1}/${maxVencimiento.getFullYear()}`;
-
       const body = {
         legajo: Number(legajo),
-        vencimiento: formattedVencimiento,
-        monto_cedulon: selectedDeudas.reduce((sum, deuda) => sum + Number(deuda.debe), 0),
-        listadeuda: selectedDeudas.map(deuda => {
-          const deudaFormateada = {
-            periodo: deuda.periodo,
-            monto_original: Number(deuda.monto_original),
-            debe: Number(deuda.debe),
-            vencimiento: deuda.vencimiento,
-            desCategoria: deuda.desCategoria,
-            pagado: 0,
-            nro_transaccion: Number(deuda.nro_transaccion),
-            categoria_deuda: 19,
-            nro_cedulon_paypertic: 0,
-            recargo: 0,
-            pago_parcial: false,
-            pago_a_cuenta: 0,
-            nro_proc: 0
-          };
-          return deudaFormateada;
-        })
+        vencimiento: selectedDeudas[selectedDeudas.length - 1].vencimiento,
+        monto_cedulon: Number(selectedDeudas.reduce((sum, deuda) => sum + Number(deuda.debe), 0).toFixed(2)),
+        listadeuda: selectedDeudas.map(deuda => ({
+          periodo: deuda.periodo,
+          monto_original: Number(Number(deuda.monto_original).toFixed(2)),
+          debe: Number(Number(deuda.debe).toFixed(2)),
+          vencimiento: deuda.vencimiento,
+          desCategoria: deuda.desCategoria,
+          pagado: 0,
+          nro_transaccion: Number(deuda.nro_transaccion),
+          categoria_deuda: 19,
+          nro_cedulon_paypertic: 0,
+          recargo: 0,
+          pago_parcial: false,
+          pago_a_cuenta: 0,
+          nro_proc: 0
+        }))
       };
-
-      console.log('Body del request:', JSON.stringify(body, null, 2));
 
       const response = await axios.post(
         `${import.meta.env.VITE_API_CEDULONES}Credito/EmitoCedulonCredito`,
         body,
         {
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
           }
         }
       );
 
-      console.log('Respuesta del servidor:', response.data);
-
       if (response.data) {
         const nroCedulonRecibido = Number(response.data);
+        // Limpiar estados
+        setSelectedDeudas([]);
+        setDeudas([]);
         setNroCedulon(nroCedulonRecibido);
         setShowCedulon(true);
         onClose();
-        console.log('Estado showCedulon:', true);
-        console.log('Estado nroCedulon:', nroCedulonRecibido);
-      } else {
-        alert('No se recibió el número de cedulón del servidor');
       }
-
     } catch (error) {
       if (error instanceof AxiosError) {
         console.error('Error al generar cedulón:', error);
@@ -175,32 +157,50 @@ function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proxim
     }
   };
 
-  useEffect(() => {
-    const fetchDeudas = async () => {
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}CM_Ctasctes/getListDeudaCredito`,
-          { params: { id_credito_materiales: idCredito } }
-        );
-        setDeudas(response.data);
-      } catch (error) {
-        console.error('Error al cargar las deudas:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Función para recargar los datos
+  const recargarDatos = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}CM_Ctasctes/getListDeudaCredito`,
+        { params: { id_credito_materiales: idCredito } }
+      );
+      setDeudas(response.data);
+    } catch (error) {
+      console.error('Error al recargar las deudas:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // Limpiar estados al cerrar el cedulón
+  const handleCloseCedulon = async () => {
+    setShowCedulon(false);
+    setNroCedulon(null);
+    setSelectedDeudas([]);
+    setDeudas([]);
+    await recargarDatos();
+  };
+
+  // Efecto para cargar deudas cuando se abre el diálogo
+  useEffect(() => {
     if (open) {
-      fetchDeudas();
+      recargarDatos();
     }
   }, [idCredito, open]);
 
-  console.log('Render - showCedulon:', showCedulon);
-  console.log('Render - nroCedulon:', nroCedulon);
-
   return (
     <>
-      <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <Dialog
+        open={open}
+        onClose={() => {
+          setSelectedDeudas([]);
+          setDeudas([]);
+          onClose();
+        }}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>Detalle de Deuda</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mb: 2 }}>
@@ -243,11 +243,7 @@ function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proxim
       {showCedulon && nroCedulon && (
         <Cedulon
           open={showCedulon}
-          onClose={() => {
-            console.log('Cerrando Cedulon');
-            setShowCedulon(false);
-            setNroCedulon(null);
-          }}
+          onClose={handleCloseCedulon}
           nroCedulon={nroCedulon}
         />
       )}

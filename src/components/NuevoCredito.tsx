@@ -9,6 +9,7 @@ import {
   Button
 } from '@mui/material';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 interface BadecData {
   nro_bad: number;
@@ -21,9 +22,10 @@ interface BadecData {
 interface NuevoCreditoProps {
   open: boolean;
   onClose: () => void;
+  onCreditoCreado: () => void;
 }
 
-function NuevoCredito({ open, onClose }: NuevoCreditoProps) {
+function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
   const [cuitOptions, setCuitOptions] = useState<BadecData[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -116,9 +118,17 @@ function NuevoCredito({ open, onClose }: NuevoCreditoProps) {
       };
 
       await axios.post(`${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/InsertNuevoCredito`, creditoData);
+      onCreditoCreado();
       onClose();
     } catch (error) {
       console.error('Error al crear crédito:', error);
+      Swal.fire({
+        title: 'Error',
+        text: 'Hubo un error al crear el crédito. Por favor, intente nuevamente.',
+        icon: 'error',
+        confirmButtonText: 'Aceptar'
+      });
+      onClose();
     }
   };
 

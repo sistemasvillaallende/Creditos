@@ -5,6 +5,7 @@ import { Container, Typography, IconButton, Box, Button } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import DetalleDeuda from './components/DetalleDeuda';
 import NuevoCredito from './components/NuevoCredito';
+import MainLayout from './layouts/MainLayout';
 
 interface Credito {
   id_credito_materiales: number;
@@ -113,8 +114,8 @@ function App() {
     { field: 'cant_cuotas', headerName: 'Cuotas', width: 100 },
     {
       field: 'acciones',
-      headerName: 'Acciones',
-      width: 100,
+      headerName: 'Acc.',
+      width: 70,
       renderCell: (params) => {
         return (
           <IconButton
@@ -137,50 +138,52 @@ function App() {
   ];
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h4" component="h1">
-          Listado de Créditos
-        </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => setOpenNuevoCredito(true)}
-        >
-          Nuevo Crédito
-        </Button>
-      </Box>
-      <div style={{ height: 400, width: '100%' }}>
-        <DataGrid
-          rows={creditos}
-          columns={columns}
-          getRowId={(row) => row.id_credito_materiales}
-          loading={loading}
-          pageSizeOptions={[5, 10, 25]}
-          initialState={{
-            pagination: { paginationModel: { pageSize: 10 } },
+    <MainLayout>
+      <Container maxWidth="xl" sx={{ mt: 4 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h4" component="h1">
+            Listado de Créditos
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => setOpenNuevoCredito(true)}
+          >
+            Nuevo Crédito
+          </Button>
+        </Box>
+        <div style={{ height: 400, width: '100%' }}>
+          <DataGrid
+            rows={creditos}
+            columns={columns}
+            getRowId={(row) => row.id_credito_materiales}
+            loading={loading}
+            pageSizeOptions={[5, 10, 25]}
+            initialState={{
+              pagination: { paginationModel: { pageSize: 10 } },
+            }}
+          />
+        </div>
+        <DetalleDeuda
+          open={openDetalleDeuda}
+          onClose={() => setOpenDetalleDeuda(false)}
+          idCredito={selectedCredito || 0}
+          legajo={selectedLegajo}
+          cuit={selectedCuit}
+          garantes={selectedGarantes}
+          proximoVencimiento={selectedVencimiento}
+          saldoAdeudado={selectedSaldoAdeudado}
+          valorCuotaUva={selectedValorCuotaUva}
+        />
+        <NuevoCredito
+          open={openNuevoCredito}
+          onClose={() => setOpenNuevoCredito(false)}
+          onCreditoCreado={() => {
+            fetchCreditos();
           }}
         />
-      </div>
-      <DetalleDeuda
-        open={openDetalleDeuda}
-        onClose={() => setOpenDetalleDeuda(false)}
-        idCredito={selectedCredito || 0}
-        legajo={selectedLegajo}
-        cuit={selectedCuit}
-        garantes={selectedGarantes}
-        proximoVencimiento={selectedVencimiento}
-        saldoAdeudado={selectedSaldoAdeudado}
-        valorCuotaUva={selectedValorCuotaUva}
-      />
-      <NuevoCredito
-        open={openNuevoCredito}
-        onClose={() => setOpenNuevoCredito(false)}
-        onCreditoCreado={() => {
-          fetchCreditos();
-        }}
-      />
-    </Container>
+      </Container>
+    </MainLayout>
   );
 }
 

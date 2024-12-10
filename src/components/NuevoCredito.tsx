@@ -133,7 +133,15 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      disablePortal={false}
+      keepMounted={false}
+      aria-modal={true}
+    >
       <DialogTitle>Nuevo Crédito</DialogTitle>
       <DialogContent>
         <Autocomplete

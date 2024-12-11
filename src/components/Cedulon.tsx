@@ -117,7 +117,7 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
     // Generar talones al pie de la primera página
     const talonY = doc.internal.pageSize.height - 80; // Posición Y para los talones
     const pageWidth = doc.internal.pageSize.width;
-    const columnWidth = (pageWidth - 30) / 2; // Ancho de cada columna
+    //const columnWidth = (pageWidth - 30) / 2; // Ancho de cada columna
 
     // Dibujar línea divisoria vertical
     doc.line(pageWidth / 2, talonY, pageWidth / 2, talonY + 70);

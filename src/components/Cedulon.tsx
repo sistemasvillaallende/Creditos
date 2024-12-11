@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import JsBarcode from 'jsbarcode';
+import LogoPablo from '../assets/LogoPablo.png';
 
 interface CedulonProps {
   open: boolean;
@@ -47,7 +49,7 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
         setCabecera(cabResponse.data);
         setDetalles(detResponse.data);
       } catch (error) {
-        console.error('Error al cargar datos del cedul��n:', error);
+        console.error('Error al cargar datos del cedulón:', error);
       } finally {
         setLoading(false);
       }
@@ -61,25 +63,54 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
   const generarPDF = () => {
     const doc = new jsPDF();
 
-    // Configuración inicial
-    doc.setFont('helvetica');
-    doc.setFontSize(16);
+    // Agregar el logo en la esquina superior izquierda
+    const logoWidth = 50;
+    const logoHeight = 15;
+    doc.addImage(LogoPablo, 'PNG', 15, 10, logoWidth, logoHeight);
 
-    // Encabezado
-    doc.text(`Cedulón #${nroCedulon}`, 15, 20);
+    // Generar código de barras
+    const canvas = document.createElement('canvas');
+    JsBarcode(canvas, nroCedulon.toString(), {
+      format: "CODE128",
+      width: 2,
+      height: 50,
+      displayValue: false
+    });
 
-    // Datos del contribuyente
-    doc.setFontSize(12);
-    doc.text('Datos del Contribuyente:', 15, 40);
+    // Agregar código de barras en la esquina superior derecha
+    const barcodeWidth = 70;
+    const barcodeHeight = 30;
+    doc.addImage(
+      canvas.toDataURL(),
+      'PNG',
+      doc.internal.pageSize.width - barcodeWidth - 15, // 15 es el margen derecho
+      10,
+      barcodeWidth,
+      barcodeHeight
+    );
+
+    // Agregar número de cedulón debajo del código de barras
     doc.setFontSize(10);
-    doc.text(`Nombre: ${cabecera?.nombre}`, 15, 50);
-    doc.text(`CUIT: ${cabecera?.cuit}`, 15, 60);
-    doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, 15, 70);
-    doc.text(`Monto a Pagar: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, 15, 80);
+    doc.text(
+      `Cedulón # ${nroCedulon}`,
+      doc.internal.pageSize.width - barcodeWidth - 15,
+      45,
+      { align: 'left' }
+    );
+
+    // Resto del contenido
+    doc.setFont('helvetica');
+    doc.setFontSize(12);
+    doc.text('Datos del Contribuyente:', 15, 50);
+    doc.setFontSize(10);
+    doc.text(`Nombre: ${cabecera?.nombre}`, 15, 60);
+    doc.text(`CUIT: ${cabecera?.cuit}`, 15, 70);
+    doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, 15, 80);
+    doc.text(`Monto a Pagar: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, 15, 90);
 
     // Tabla de detalles
     autoTable(doc, {
-      startY: 90,
+      startY: 100,
       head: [['Período', 'Concepto', 'Monto Original', 'Recargo', 'Total']],
       body: detalles.map(detalle => [
         detalle.periodo,
@@ -94,7 +125,6 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
       theme: 'grid'
     });
 
-    // Guardar PDF
     doc.save(`Cedulon_${nroCedulon}.pdf`);
   };
 

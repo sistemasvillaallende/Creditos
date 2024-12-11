@@ -176,6 +176,21 @@ function App() {
     },
     { field: 'cant_cuotas', headerName: 'Cuotas', width: 100 },
     {
+      field: 'baja',
+      headerName: 'Estado',
+      width: 120,
+      renderCell: (params) => {
+        return (
+          <span style={{
+            color: params.row.baja ? '#d32f2f' : '#2e7d32',
+            fontWeight: 'bold'
+          }}>
+            {params.row.baja ? 'BAJA' : 'VIGENTE'}
+          </span>
+        );
+      }
+    },
+    {
       field: 'acciones',
       headerName: 'Acciones',
       width: 160,

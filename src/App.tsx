@@ -4,6 +4,8 @@ import axios from 'axios';
 import { Container, Typography, IconButton, Box, Button } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import Swal from 'sweetalert2';
 import DetalleDeuda from './components/DetalleDeuda';
 import NuevoCredito from './components/NuevoCredito';
 import EditarCredito from './components/EditarCredito';
@@ -78,6 +80,64 @@ function App() {
     fetchCreditos();
   }, []);
 
+  const handleDelete = async (legajo: number, id_credito_materiales: number) => {
+    const { value: observaciones } = await Swal.fire({
+      title: '¿Está seguro de eliminar este crédito?',
+      text: "Esta acción no se puede deshacer",
+      icon: 'warning',
+      input: 'text',
+      inputLabel: 'Auditoría',
+      inputPlaceholder: 'Ingrese el motivo de la eliminación',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      inputValidator: (value) => {
+        if (!value) {
+          return 'Debe ingresar un motivo para la eliminación';
+        }
+        return null;
+      }
+    });
+
+    if (observaciones) {
+      try {
+        const payload = {
+          id_auditoria: 0,
+          fecha: new Date().toISOString(),
+          usuario: "sistema",
+          proceso: "baja",
+          identificacion: "web",
+          autorizaciones: "",
+          observaciones: observaciones,
+          detalle: "",
+          ip: ""
+        };
+
+        await axios.put(
+          `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/BajaCredito?legajo=${legajo}&id_credito_materiales=${id_credito_materiales}`,
+          payload
+        );
+
+        Swal.fire(
+          'Eliminado',
+          'El crédito ha sido eliminado correctamente',
+          'success'
+        );
+
+        fetchCreditos(); // Actualizar la tabla
+      } catch (error) {
+        console.error('Error al eliminar el crédito:', error);
+        Swal.fire(
+          'Error',
+          'Hubo un error al eliminar el crédito',
+          'error'
+        );
+      }
+    }
+  };
+
   const columns: GridColDef[] = [
     { field: 'id_credito_materiales', headerName: 'ID', width: 90 },
     { field: 'legajo', headerName: 'Legajo', width: 100 },
@@ -118,7 +178,7 @@ function App() {
     {
       field: 'acciones',
       headerName: 'Acciones',
-      width: 130,
+      width: 160,
       renderCell: (params) => {
         return (
           <>
@@ -133,6 +193,7 @@ function App() {
                 setSelectedSaldoAdeudado(params.row.saldo_adeudado);
                 setSelectedValorCuotaUva(params.row.valor_cuota_uva);
               }}
+              color="primary"
             >
               <VisibilityIcon />
             </IconButton>
@@ -142,8 +203,15 @@ function App() {
                 setSelectedLegajo(params.row.legajo);
                 setOpenEditarCredito(true);
               }}
+              color="warning"
             >
               <EditIcon />
+            </IconButton>
+            <IconButton
+              onClick={() => handleDelete(params.row.legajo, params.row.id_credito_materiales)}
+              color="error"
+            >
+              <DeleteIcon />
             </IconButton>
           </>
         );

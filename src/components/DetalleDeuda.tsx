@@ -28,12 +28,18 @@ interface DetalleDeudaProps {
 
 interface Deuda {
   periodo: string;
-  monto_original: number;
-  debe: number;
-  vencimiento: string;
+  deudaOriginal: number;
+  importe: number;
+  fecha_vencimiento: string;
   desCategoria: string;
   pagado: number;
   nro_transaccion: number;
+  categoria_deuda: number;
+  nro_cedulon_paypertic: number;
+  intereses: number;
+  pago_parcial: boolean;
+  pago_a_cuenta: number;
+  nro_proc: number;
 }
 
 function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proximoVencimiento, saldoAdeudado, valorCuotaUva }: DetalleDeudaProps) {
@@ -82,7 +88,7 @@ function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proxim
       width: 120,
     },
     {
-      field: 'monto_original',
+      field: 'deudaOriginal',
       headerName: 'Monto Original',
       width: 150,
       renderCell: (params: GridRenderCellParams) => (
@@ -92,7 +98,7 @@ function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proxim
       )
     },
     {
-      field: 'debe',
+      field: 'importe',
       headerName: 'Debe',
       width: 150,
       renderCell: (params: GridRenderCellParams) => (
@@ -102,7 +108,7 @@ function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proxim
       )
     },
     {
-      field: 'vencimiento',
+      field: 'fecha_vencimiento',
       headerName: 'Vencimiento',
       width: 150,
     },
@@ -130,13 +136,13 @@ function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proxim
     try {
       const body = {
         legajo: Number(legajo),
-        vencimiento: selectedDeudas[selectedDeudas.length - 1].vencimiento,
-        monto_cedulon: Number(selectedDeudas.reduce((sum, deuda) => sum + Number(deuda.debe), 0).toFixed(2)),
+        vencimiento: selectedDeudas[selectedDeudas.length - 1].fecha_vencimiento,
+        monto_cedulon: Number(selectedDeudas.reduce((sum, deuda) => sum + Number(deuda.importe), 0).toFixed(2)),
         listadeuda: selectedDeudas.map(deuda => ({
           periodo: deuda.periodo,
-          monto_original: Number(Number(deuda.monto_original).toFixed(2)),
-          debe: Number(Number(deuda.debe).toFixed(2)),
-          vencimiento: deuda.vencimiento,
+          monto_original: Number(Number(deuda.deudaOriginal).toFixed(2)),
+          debe: Number(Number(deuda.importe).toFixed(2)),
+          vencimiento: deuda.fecha_vencimiento,
           desCategoria: deuda.desCategoria,
           pagado: 0,
           nro_transaccion: Number(deuda.nro_transaccion),

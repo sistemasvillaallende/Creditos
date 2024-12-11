@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import axios from 'axios';
-import { Container, Typography, IconButton, Box, Button } from '@mui/material';
+import { Container, Typography, IconButton, Box, Button, TextField, InputAdornment } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -10,6 +10,7 @@ import DetalleDeuda from './components/DetalleDeuda';
 import NuevoCredito from './components/NuevoCredito';
 import EditarCredito from './components/EditarCredito';
 import MainLayout from './layouts/MainLayout';
+import SearchIcon from '@mui/icons-material/Search';
 
 interface Credito {
   id_credito_materiales: number;
@@ -45,14 +46,16 @@ function App() {
   const [selectedLegajo, setSelectedLegajo] = useState<number>(0);
   const [selectedCuit, setSelectedCuit] = useState<string>('');
   const [openEditarCredito, setOpenEditarCredito] = useState(false);
+  const [searchLegajo, setSearchLegajo] = useState<string>('');
 
-  const fetchCreditos = async () => {
+  const fetchCreditos = async (legajo?: string) => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/GetCreditoMPaginado`,
+        `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/GetCreditoMPaginado`,
         {
           params: {
             buscarPor: 'legajo',
+            strParametro: legajo,
             pagina: 1,
             registros_por_pagina: 10
           }
@@ -71,6 +74,7 @@ function App() {
       }
     } catch (error) {
       console.error('Error al cargar los créditos:', error);
+      setCreditos([]);
     } finally {
       setLoading(false);
     }
@@ -135,6 +139,18 @@ function App() {
           'error'
         );
       }
+    }
+  };
+
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const legajo = event.target.value;
+    setSearchLegajo(legajo);
+
+    // Solo llamar a la API si hay un legajo para buscar
+    if (legajo.trim()) {
+      fetchCreditos(legajo);
+    } else {
+      fetchCreditos();
     }
   };
 
@@ -249,6 +265,25 @@ function App() {
             Nuevo Crédito
           </Button>
         </Box>
+
+        <Box mb={2}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            label="Buscar por legajo"
+            value={searchLegajo}
+            onChange={handleSearch}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+            placeholder="Ingrese el número de legajo"
+          />
+        </Box>
+
         <div style={{ height: 400, width: '100%' }}>
           <DataGrid
             rows={creditos}

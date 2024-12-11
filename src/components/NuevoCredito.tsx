@@ -6,7 +6,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button
+  Button,
+  Typography,
+  Grid
 } from '@mui/material';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -35,7 +37,12 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
     garantes: '',
     presupuesto: '',
     presupuesto_uva: '',
-    cant_cuotas: ''
+    cant_cuotas: '',
+    circunscripcion: '',
+    seccion: '',
+    manzana: '',
+    parcela: '',
+    p_h: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -76,6 +83,11 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
     if (!formData.presupuesto) newErrors.presupuesto = 'El presupuesto es obligatorio';
     if (!formData.presupuesto_uva) newErrors.presupuesto_uva = 'El presupuesto UVA es obligatorio';
     if (!formData.cant_cuotas) newErrors.cant_cuotas = 'La cantidad de cuotas es obligatoria';
+    if (!formData.circunscripcion) newErrors.circunscripcion = 'La circunscripción es obligatoria';
+    if (!formData.seccion) newErrors.seccion = 'La sección es obligatoria';
+    if (!formData.manzana) newErrors.manzana = 'La manzana es obligatoria';
+    if (!formData.parcela) newErrors.parcela = 'La parcela es obligatoria';
+    if (!formData.p_h) newErrors.p_h = 'El P.H. es obligatorio';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -102,7 +114,12 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
           per_ultimo: "string",
           con_deuda: 0,
           saldo_adeudado: 0,
-          proximo_vencimiento: new Date().toISOString()
+          proximo_vencimiento: new Date().toISOString(),
+          circunscripcion: parseInt(formData.circunscripcion),
+          seccion: parseInt(formData.seccion),
+          manzana: parseInt(formData.manzana),
+          parcela: parseInt(formData.parcela),
+          p_h: parseInt(formData.p_h)
         },
         auditoria: {
           id_auditoria: 0,
@@ -220,6 +237,72 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
           error={!!errors.cant_cuotas}
           helperText={errors.cant_cuotas}
         />
+        <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
+          Nomenclatura Catastral
+        </Typography>
+
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Circunscripción"
+              value={formData.circunscripcion}
+              onChange={(e) => setFormData({ ...formData, circunscripcion: e.target.value })}
+              margin="normal"
+              fullWidth
+              type="number"
+              error={!!errors.circunscripcion}
+              helperText={errors.circunscripcion}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Sección"
+              value={formData.seccion}
+              onChange={(e) => setFormData({ ...formData, seccion: e.target.value })}
+              margin="normal"
+              fullWidth
+              type="number"
+              error={!!errors.seccion}
+              helperText={errors.seccion}
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Manzana"
+              value={formData.manzana}
+              onChange={(e) => setFormData({ ...formData, manzana: e.target.value })}
+              margin="normal"
+              fullWidth
+              type="number"
+              error={!!errors.manzana}
+              helperText={errors.manzana}
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="Parcela"
+              value={formData.parcela}
+              onChange={(e) => setFormData({ ...formData, parcela: e.target.value })}
+              margin="normal"
+              fullWidth
+              type="number"
+              error={!!errors.parcela}
+              helperText={errors.parcela}
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              label="P.H."
+              value={formData.p_h}
+              onChange={(e) => setFormData({ ...formData, p_h: e.target.value })}
+              margin="normal"
+              fullWidth
+              type="number"
+              error={!!errors.p_h}
+              helperText={errors.p_h}
+            />
+          </Grid>
+        </Grid>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancelar</Button>

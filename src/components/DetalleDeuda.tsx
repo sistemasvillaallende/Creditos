@@ -9,7 +9,8 @@ import {
   Typography,
   Checkbox,
   Button,
-  Grid
+  Grid,
+  FormControlLabel
 } from '@mui/material';
 import Cedulon from './Cedulon';
 
@@ -43,11 +44,31 @@ function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proxim
   const [showCedulon, setShowCedulon] = useState(false);
   const [nroCedulon, setNroCedulon] = useState<number | null>(null);
 
+  const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      setSelectedDeudas(deudas);
+    } else {
+      setSelectedDeudas([]);
+    }
+  };
+
   const columns: GridColDef[] = [
     {
       field: 'seleccionar',
       headerName: 'Seleccionar',
       width: 100,
+      renderHeader: () => (
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={selectedDeudas.length === deudas.length && deudas.length > 0}
+              indeterminate={selectedDeudas.length > 0 && selectedDeudas.length < deudas.length}
+              onChange={handleSelectAll}
+            />
+          }
+          label=""
+        />
+      ),
       renderCell: (params) => (
         <Checkbox
           checked={selectedDeudas.some(d => d.nro_transaccion === params.row.nro_transaccion)}

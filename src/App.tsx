@@ -3,8 +3,10 @@ import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import axios from 'axios';
 import { Container, Typography, IconButton, Box, Button } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import EditIcon from '@mui/icons-material/Edit';
 import DetalleDeuda from './components/DetalleDeuda';
 import NuevoCredito from './components/NuevoCredito';
+import EditarCredito from './components/EditarCredito';
 import MainLayout from './layouts/MainLayout';
 
 interface Credito {
@@ -40,6 +42,7 @@ function App() {
   const [selectedValorCuotaUva, setSelectedValorCuotaUva] = useState<number>(0);
   const [selectedLegajo, setSelectedLegajo] = useState<number>(0);
   const [selectedCuit, setSelectedCuit] = useState<string>('');
+  const [openEditarCredito, setOpenEditarCredito] = useState(false);
 
   const fetchCreditos = async () => {
     try {
@@ -114,24 +117,35 @@ function App() {
     { field: 'cant_cuotas', headerName: 'Cuotas', width: 100 },
     {
       field: 'acciones',
-      headerName: 'Acc.',
-      width: 70,
+      headerName: 'Acciones',
+      width: 130,
       renderCell: (params) => {
         return (
-          <IconButton
-            onClick={() => {
-              setSelectedCredito(params.row.id_credito_materiales);
-              setSelectedLegajo(params.row.legajo);
-              setSelectedCuit(params.row.cuit_solicitante);
-              setOpenDetalleDeuda(true);
-              setSelectedGarantes(params.row.garantes);
-              setSelectedVencimiento(params.row.proximo_vencimiento);
-              setSelectedSaldoAdeudado(params.row.saldo_adeudado);
-              setSelectedValorCuotaUva(params.row.valor_cuota_uva);
-            }}
-          >
-            <VisibilityIcon />
-          </IconButton>
+          <>
+            <IconButton
+              onClick={() => {
+                setSelectedCredito(params.row.id_credito_materiales);
+                setSelectedLegajo(params.row.legajo);
+                setSelectedCuit(params.row.cuit_solicitante);
+                setOpenDetalleDeuda(true);
+                setSelectedGarantes(params.row.garantes);
+                setSelectedVencimiento(params.row.proximo_vencimiento);
+                setSelectedSaldoAdeudado(params.row.saldo_adeudado);
+                setSelectedValorCuotaUva(params.row.valor_cuota_uva);
+              }}
+            >
+              <VisibilityIcon />
+            </IconButton>
+            <IconButton
+              onClick={() => {
+                setSelectedCredito(params.row.id_credito_materiales);
+                setSelectedLegajo(params.row.legajo);
+                setOpenEditarCredito(true);
+              }}
+            >
+              <EditIcon />
+            </IconButton>
+          </>
         );
       },
     },
@@ -179,6 +193,15 @@ function App() {
           open={openNuevoCredito}
           onClose={() => setOpenNuevoCredito(false)}
           onCreditoCreado={() => {
+            fetchCreditos();
+          }}
+        />
+        <EditarCredito
+          open={openEditarCredito}
+          onClose={() => setOpenEditarCredito(false)}
+          idCredito={selectedCredito || 0}
+          legajo={selectedLegajo}
+          onCreditoEditado={() => {
             fetchCreditos();
           }}
         />

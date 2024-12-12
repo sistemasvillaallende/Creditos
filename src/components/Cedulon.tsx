@@ -65,23 +65,23 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
 
     // Función para generar el encabezado
     const generarEncabezado = () => {
-      // Agregar el logo en la esquina superior izquierda
-      const logoWidth = 50;
-      const logoHeight = 15;
+      // Logo y código de barras
+      const logoWidth = 40;
+      const logoHeight = 12;
       doc.addImage(LogoPablo, 'PNG', 15, 10, logoWidth, logoHeight);
 
       // Generar código de barras
       const canvas = document.createElement('canvas');
       JsBarcode(canvas, nroCedulon.toString(), {
         format: "CODE128",
-        width: 2,
-        height: 50,
+        width: 1.5,
+        height: 40,
         displayValue: false
       });
 
-      // Agregar código de barras en la esquina superior derecha
-      const barcodeWidth = 70;
-      const barcodeHeight = 30;
+      // Agregar código de barras más pequeño
+      const barcodeWidth = 60;
+      const barcodeHeight = 25;
       doc.addImage(
         canvas.toDataURL(),
         'PNG',
@@ -91,70 +91,37 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
         barcodeHeight
       );
 
-      // Agregar número de cedulón debajo del código de barras
-      doc.setFontSize(10);
+      // Número de cedulón
+      doc.setFontSize(9);
       doc.text(
         `Cedulón # ${nroCedulon}`,
         doc.internal.pageSize.width - barcodeWidth - 15,
-        45,
+        40,
         { align: 'left' }
       );
 
       // Datos del contribuyente
       doc.setFont('helvetica');
-      doc.setFontSize(12);
-      doc.text('Datos del Contribuyente:', 15, 50);
-      doc.setFontSize(10);
-      doc.text(`Nombre: ${cabecera?.nombre}`, 15, 60);
-      doc.text(`CUIT: ${cabecera?.cuit}`, 15, 70);
-      doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, 15, 80);
-      doc.text(`Monto a Pagar: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, 15, 90);
+      doc.setFontSize(11);
+      doc.text('Datos del Contribuyente:', 15, 45);
+      doc.setFontSize(9);
+      doc.text(`Nombre: ${cabecera?.nombre}`, 15, 52);
+      doc.text(`CUIT: ${cabecera?.cuit}`, 15, 58);
+      doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, 15, 64);
+      doc.text(`Monto a Pagar: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, 15, 70);
     };
 
-    // Primera página
+    // Generar encabezado
     generarEncabezado();
 
-    // Generar talones al pie de la primera página
-    const talonY = doc.internal.pageSize.height - 80; // Posición Y para los talones
-    const pageWidth = doc.internal.pageSize.width;
-    //const columnWidth = (pageWidth - 30) / 2; // Ancho de cada columna
-
-    // Dibujar línea divisoria vertical
-    doc.line(pageWidth / 2, talonY, pageWidth / 2, talonY + 70);
-
-    // Talón para el contribuyente
-    doc.setFontSize(12);
+    // Tabla de detalles en la misma página
     doc.setFont('helvetica', 'bold');
-    doc.text('TALÓN PARA EL CONTRIBUYENTE', 15, talonY);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.text(`Cedulón #: ${nroCedulon}`, 15, talonY + 10);
-    doc.text(`Nombre: ${cabecera?.nombre}`, 15, talonY + 20);
-    doc.text(`CUIT: ${cabecera?.cuit}`, 15, talonY + 30);
-    doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, 15, talonY + 40);
-    doc.text(`Monto: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, 15, talonY + 50);
+    doc.setFontSize(11);
+    doc.text('DETALLES DEL CRÉDITO', 15, 85);
 
-    // Talón para la municipalidad
-    doc.setFont('helvetica', 'bold');
-    doc.text('TALÓN PARA LA MUNICIPALIDAD', pageWidth / 2 + 15, talonY);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Cedulón #: ${nroCedulon}`, pageWidth / 2 + 15, talonY + 10);
-    doc.text(`Nombre: ${cabecera?.nombre}`, pageWidth / 2 + 15, talonY + 20);
-    doc.text(`CUIT: ${cabecera?.cuit}`, pageWidth / 2 + 15, talonY + 30);
-    doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, pageWidth / 2 + 15, talonY + 40);
-    doc.text(`Monto: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, pageWidth / 2 + 15, talonY + 50);
-
-    // Segunda página
-    doc.addPage();
-    generarEncabezado();
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text('DETALLES DEL CRÉDITO', 15, 100);
-
-    // Tabla de detalles en la segunda página
+    // Tabla de detalles más compacta
     autoTable(doc, {
-      startY: 110,
+      startY: 90,
       head: [['Período', 'Concepto', 'Monto Original', 'Recargo', 'Total']],
       body: detalles.map(detalle => [
         detalle.periodo,
@@ -164,17 +131,48 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
         `$${detalle.descInteres.toLocaleString('es-AR')}`
       ]),
       styles: {
-        fontSize: 8,
+        fontSize: 7,
         cellPadding: 1
       },
       headStyles: {
         fillColor: [66, 66, 66],
+        fontSize: 7,
         cellPadding: 1
       },
-      margin: { top: 15 },
-      theme: 'grid',
-      rowPageBreak: 'avoid'
+      margin: { top: 10 },
+      theme: 'grid'
     });
+
+    // Talones al pie
+    const talonY = doc.internal.pageSize.height - 60;
+    const pageWidth = doc.internal.pageSize.width;
+
+    // Línea divisoria vertical
+    doc.line(pageWidth / 2, talonY, pageWidth / 2, talonY + 50);
+
+    // Talón para el contribuyente
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TALÓN PARA EL CONTRIBUYENTE', 15, talonY + 5);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text(`Cedulón #: ${nroCedulon}`, 15, talonY + 12);
+    doc.text(`Nombre: ${cabecera?.nombre}`, 15, talonY + 19);
+    doc.text(`CUIT: ${cabecera?.cuit}`, 15, talonY + 26);
+    doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, 15, talonY + 33);
+    doc.text(`Monto: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, 15, talonY + 40);
+
+    // Talón para la municipalidad
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text('TALÓN PARA LA MUNICIPALIDAD', pageWidth / 2 + 15, talonY + 5);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text(`Cedulón #: ${nroCedulon}`, pageWidth / 2 + 15, talonY + 12);
+    doc.text(`Nombre: ${cabecera?.nombre}`, pageWidth / 2 + 15, talonY + 19);
+    doc.text(`CUIT: ${cabecera?.cuit}`, pageWidth / 2 + 15, talonY + 26);
+    doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, pageWidth / 2 + 15, talonY + 33);
+    doc.text(`Monto: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, pageWidth / 2 + 15, talonY + 40);
 
     doc.save(`Cedulon_${nroCedulon}.pdf`);
   };

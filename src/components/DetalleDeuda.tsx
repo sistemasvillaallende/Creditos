@@ -135,7 +135,7 @@ function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proxim
 
     try {
       const body = {
-        legajo: Number(legajo),
+        id_credito_materiales: Number(idCredito),
         vencimiento: selectedDeudas[selectedDeudas.length - 1].fecha_vencimiento,
         monto_cedulon: Number(selectedDeudas.reduce((sum, deuda) => sum + Number(deuda.importe), 0).toFixed(2)),
         listadeuda: selectedDeudas.map(deuda => ({
@@ -157,18 +157,12 @@ function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proxim
 
       const response = await axios.post(
         `${import.meta.env.VITE_API_CEDULONES}Credito/EmitoCedulonCredito`,
-        body,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
-        }
+        body
       );
 
       if (response.data) {
         const nroCedulonRecibido = Number(response.data);
-        // Limpiar estados
+        // Limpiar estados antes de mostrar el cedulón
         setSelectedDeudas([]);
         setDeudas([]);
         setNroCedulon(nroCedulonRecibido);
@@ -209,10 +203,21 @@ function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proxim
     await recargarDatos();
   };
 
+  // Limpiar estados cuando se cierra el diálogo
+  const handleClose = () => {
+    setSelectedDeudas([]);
+    setDeudas([]);
+    onClose();
+  };
+
   // Efecto para cargar deudas cuando se abre el diálogo
   useEffect(() => {
     if (open) {
       recargarDatos();
+    } else {
+      // Limpiar estados cuando se cierra
+      setSelectedDeudas([]);
+      setDeudas([]);
     }
   }, [idCredito, open]);
 
@@ -220,15 +225,11 @@ function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proxim
     <>
       <Dialog
         open={open}
-        onClose={() => {
-          setSelectedDeudas([]);
-          setDeudas([]);
-          onClose();
-        }}
+        onClose={handleClose}
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Detalle de Deuda</DialogTitle>
+        <DialogTitle># {idCredito} Detalle de Deuda</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mb: 2 }}>
             <Grid item xs={12} md={6}>

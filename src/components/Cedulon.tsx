@@ -41,13 +41,20 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
   useEffect(() => {
     const fetchCedulonData = async () => {
       try {
+        setLoading(true);
+        // Obtener datos en paralelo
         const [cabResponse, detResponse] = await Promise.all([
           axios.get(`${import.meta.env.VITE_API_CEDULONES}Credito/getCabeceraPrintCedulonCredito?nroCedulon=${nroCedulon}`),
           axios.get(`${import.meta.env.VITE_API_CEDULONES}Credito/getDetallePrintCedulonCredito?nroCedulon=${nroCedulon}`)
         ]);
 
-        setCabecera(cabResponse.data);
-        setDetalles(detResponse.data);
+        // Asegurarse de que no haya duplicados usando un Set con nro_transaccion
+        const detallesUnicos = Array.from(
+          new Map(detResponse.data.map((item: DetalleCedulon) => [item.nro_transaccion, item])).values()
+        ) as DetalleCedulon[];
+
+        setCabecera(cabResponse.data as CabeceraCedulon);
+        setDetalles(detallesUnicos);
       } catch (error) {
         console.error('Error al cargar datos del cedulón:', error);
       } finally {
@@ -58,7 +65,13 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
     if (open && nroCedulon) {
       fetchCedulonData();
     }
-  }, [open, nroCedulon]);
+
+    // Limpiar estados al desmontar
+    return () => {
+      setCabecera(null);
+      setDetalles([]);
+    };
+  }, [nroCedulon, open]);
 
   const generarPDF = () => {
     const doc = new jsPDF();

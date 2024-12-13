@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   TextField,
   Autocomplete,
@@ -45,6 +45,7 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
     p_h: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [valorUva, setValorUva] = useState<number>(0);
 
   const fetchBadecData = async (cuit: string) => {
     if (cuit.length < 3) return;
@@ -149,6 +150,31 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
     }
   };
 
+  useEffect(() => {
+    const fetchValorUva = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}CM_UVA/GetValorUva`);
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          setValorUva(response.data[0].valor_uva);
+        }
+      } catch (error) {
+        console.error('Error al obtener valor UVA:', error);
+      }
+    };
+
+    fetchValorUva();
+  }, []);
+
+  useEffect(() => {
+    if (formData.presupuesto && valorUva) {
+      const presupuestoUva = Number(formData.presupuesto) / valorUva;
+      setFormData(prev => ({
+        ...prev,
+        presupuesto_uva: presupuestoUva.toFixed(2)
+      }));
+    }
+  }, [formData.presupuesto, valorUva]);
+
   return (
     <Dialog
       open={open}
@@ -218,14 +244,12 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
           helperText={errors.presupuesto}
         />
         <TextField
-          label="Presupuesto UVA"
-          value={formData.presupuesto_uva}
-          onChange={(e) => setFormData({ ...formData, presupuesto_uva: e.target.value })}
+          label="Presupuesto UVA (saldo inicial UVA)"
+          value={valorUva}
           margin="normal"
           fullWidth
-          type="number"
-          error={!!errors.presupuesto_uva}
-          helperText={errors.presupuesto_uva}
+          disabled
+          helperText={`Valor UVA actual: $${valorUva.toLocaleString('es-AR')}`}
         />
         <TextField
           label="Cantidad de Cuotas"

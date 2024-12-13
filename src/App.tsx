@@ -182,7 +182,7 @@ function App() {
     },
     {
       field: 'presupuesto_uva',
-      headerName: 'Presupuesto UVA',
+      headerName: 'Presupuesto UVA (saldo inicial UVA)',
       width: 130,
       align: 'left',
       headerAlign: 'left',

@@ -11,6 +11,7 @@ import NuevoCredito from './components/NuevoCredito';
 import EditarCredito from './components/EditarCredito';
 import MainLayout from './layouts/MainLayout';
 import SearchIcon from '@mui/icons-material/Search';
+import UploadIcon from '@mui/icons-material/Upload';
 
 interface Credito {
   id_credito_materiales: number;
@@ -211,6 +212,59 @@ function App() {
       headerName: 'Acciones',
       width: 160,
       renderCell: (params) => {
+        const handleAltaBaja = async (id_credito_materiales: number) => {
+          if (params.row.baja) {
+            const { value: observaciones } = await Swal.fire({
+              title: '¿Está seguro de dar de alta este crédito?',
+              text: "Esta acción volverá a activar el crédito",
+              icon: 'warning',
+              input: 'text',
+              inputLabel: 'Auditoría',
+              inputPlaceholder: 'Ingrese el motivo del alta',
+              showCancelButton: true,
+              confirmButtonColor: '#3085d6',
+              cancelButtonColor: '#d33',
+              confirmButtonText: 'Sí, dar de alta',
+              cancelButtonText: 'Cancelar',
+              inputValidator: (value) => {
+                if (!value) {
+                  return 'Debe ingresar un motivo para el alta';
+                }
+                return null;
+              }
+            });
+
+            if (observaciones) {
+              try {
+                const payload = {
+                  id_auditoria: 0,
+                  fecha: new Date().toISOString(),
+                  usuario: "sistema",
+                  proceso: "alta",
+                  identificacion: "web",
+                  autorizaciones: "",
+                  observaciones: observaciones,
+                  detalle: "",
+                  ip: ""
+                };
+
+                await axios.put(
+                  `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/AltaCredito?id_credito_materiales=${id_credito_materiales}`,
+                  payload
+                );
+
+                Swal.fire('Éxito', 'El crédito ha sido dado de alta correctamente', 'success');
+                fetchCreditos();
+              } catch (error) {
+                console.error('Error al dar de alta el crédito:', error);
+                Swal.fire('Error', 'Hubo un error al dar de alta el crédito', 'error');
+              }
+            }
+          } else {
+            handleDelete(params.row.legajo, id_credito_materiales);
+          }
+        };
+
         return (
           <>
             <IconButton
@@ -239,10 +293,10 @@ function App() {
               <EditIcon />
             </IconButton>
             <IconButton
-              onClick={() => handleDelete(params.row.legajo, params.row.id_credito_materiales)}
-              color="error"
+              onClick={() => handleAltaBaja(params.row.id_credito_materiales)}
+              color={params.row.baja ? "success" : "error"}
             >
-              <DeleteIcon />
+              {params.row.baja ? <UploadIcon /> : <DeleteIcon />}
             </IconButton>
           </>
         );

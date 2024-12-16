@@ -49,7 +49,31 @@ function App() {
   const [openEditarCredito, setOpenEditarCredito] = useState(false);
   const [searchLegajo, setSearchLegajo] = useState<string>('');
 
-  const fetchCreditos = async (legajo?: string) => {
+  const fetchAllCreditos = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/GetAllCreditos`
+      );
+
+      if (Array.isArray(response.data)) {
+        const creditosFormateados = response.data.map((credito: Credito) => {
+          return {
+            ...credito,
+            presupuesto: Number(credito.presupuesto),
+            presupuesto_uva: Number(credito.presupuesto_uva)
+          };
+        });
+        setCreditos(creditosFormateados);
+      }
+    } catch (error) {
+      console.error('Error al cargar los créditos:', error);
+      setCreditos([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCreditosByLegajo = async (legajo: string) => {
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/GetCreditoMPaginado`,
@@ -81,8 +105,19 @@ function App() {
     }
   };
 
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const legajo = event.target.value;
+    setSearchLegajo(legajo);
+
+    if (legajo.trim()) {
+      fetchCreditosByLegajo(legajo);
+    } else {
+      fetchAllCreditos();
+    }
+  };
+
   useEffect(() => {
-    fetchCreditos();
+    fetchAllCreditos();
   }, []);
 
   const handleDelete = async (legajo: number, id_credito_materiales: number) => {
@@ -131,7 +166,7 @@ function App() {
           'success'
         );
 
-        fetchCreditos(); // Actualizar la tabla
+        fetchAllCreditos(); // Actualizar la tabla
       } catch (error) {
         console.error('Error al eliminar el crédito:', error);
         Swal.fire(
@@ -140,18 +175,6 @@ function App() {
           'error'
         );
       }
-    }
-  };
-
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const legajo = event.target.value;
-    setSearchLegajo(legajo);
-
-    // Solo llamar a la API si hay un legajo para buscar
-    if (legajo.trim()) {
-      fetchCreditos(legajo);
-    } else {
-      fetchCreditos();
     }
   };
 
@@ -254,7 +277,7 @@ function App() {
                 );
 
                 Swal.fire('Éxito', 'El crédito ha sido dado de alta correctamente', 'success');
-                fetchCreditos();
+                fetchAllCreditos();
               } catch (error) {
                 console.error('Error al dar de alta el crédito:', error);
                 Swal.fire('Error', 'Hubo un error al dar de alta el crédito', 'error');
@@ -365,7 +388,7 @@ function App() {
           open={openNuevoCredito}
           onClose={() => setOpenNuevoCredito(false)}
           onCreditoCreado={() => {
-            fetchCreditos();
+            fetchAllCreditos();
           }}
         />
         <EditarCredito
@@ -374,7 +397,7 @@ function App() {
           idCredito={selectedCredito || 0}
           legajo={selectedLegajo}
           onCreditoEditado={() => {
-            fetchCreditos();
+            fetchAllCreditos();
           }}
         />
       </Container>

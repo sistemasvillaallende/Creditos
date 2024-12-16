@@ -136,6 +136,14 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
       };
 
       await axios.post(`${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/InsertNuevoCredito`, creditoData);
+
+      Swal.fire({
+        title: 'Éxito',
+        text: 'El crédito ha sido creado correctamente',
+        icon: 'success',
+        confirmButtonText: 'Aceptar'
+      });
+
       onCreditoCreado();
       onClose();
     } catch (error) {
@@ -146,7 +154,6 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
         icon: 'error',
         confirmButtonText: 'Aceptar'
       });
-      onClose();
     }
   };
 

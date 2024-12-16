@@ -141,7 +141,7 @@ function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proxim
         listadeuda: selectedDeudas.map(deuda => ({
           periodo: deuda.periodo,
           monto_original: Number(Number(deuda.deudaOriginal).toFixed(2)),
-          debe: Number(Number(deuda.importe).toFixed(2)),
+          importe: Number(Number(deuda.importe).toFixed(2)),
           vencimiento: deuda.fecha_vencimiento,
           desCategoria: deuda.desCategoria,
           pagado: 0,

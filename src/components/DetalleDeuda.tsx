@@ -146,7 +146,7 @@ function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proxim
           desCategoria: deuda.desCategoria,
           pagado: 0,
           nro_transaccion: Number(deuda.nro_transaccion),
-          categoria_deuda: 19,
+          categoria_deuda: 1,
           nro_cedulon_paypertic: 0,
           recargo: 0,
           pago_parcial: false,

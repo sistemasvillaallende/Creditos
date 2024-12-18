@@ -51,7 +51,13 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
           new Map(detResponse.data.map((item: DetalleCedulon) => [item.nro_transaccion, item])).values()
         ) as DetalleCedulon[];
 
-        const montoTotal = detallesUnicos.reduce((sum, detalle) => sum + detalle.descInteres, 0);
+        // Calcular el total para cada detalle y el monto total a pagar
+        const detallesConTotal = detallesUnicos.map(detalle => ({
+          ...detalle,
+          descInteres: detalle.montoOriginal + detalle.recargo
+        }));
+
+        const montoTotal = detallesConTotal.reduce((sum, detalle) => sum + detalle.descInteres, 0);
 
         const cabeceraData = {
           ...cabResponse.data,
@@ -59,7 +65,7 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
         } as CabeceraCedulon;
 
         setCabecera(cabeceraData);
-        setDetalles(detallesUnicos);
+        setDetalles(detallesConTotal);
       } catch (error) {
         console.error('Error al cargar datos del cedulón:', error);
       } finally {

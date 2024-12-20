@@ -6,7 +6,8 @@ import {
   DialogActions,
   Button,
   TextField,
-  Autocomplete
+  Autocomplete,
+  Grid
 } from '@mui/material';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -188,132 +189,158 @@ export default function EditarCredito({ open, onClose, idCredito, legajo, onCred
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Editar Crédito</DialogTitle>
       <DialogContent>
-        <Autocomplete
-          options={cuitOptions}
-          getOptionLabel={(option) => `${option.cuit} - ${option.nombre}`}
-          loading={loading}
-          onInputChange={(_, newInputValue) => {
-            fetchBadecData(newInputValue);
-          }}
-          onChange={handleCuitChange}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="CUIT Solicitante"
-              margin="normal"
-              fullWidth
-              error={!!errors.cuit_solicitante}
-              helperText={errors.cuit_solicitante}
-            />
-          )}
-        />
-        <TextField
-          label="Legajo"
-          value={formData.legajo}
-          onChange={(e) => setFormData({ ...formData, legajo: e.target.value })}
-          margin="normal"
-          fullWidth
-          error={!!errors.legajo}
-          helperText={errors.legajo}
-        />
-        <TextField
-          label="Domicilio"
-          value={formData.domicilio}
-          onChange={(e) => setFormData({ ...formData, domicilio: e.target.value })}
-          margin="normal"
-          fullWidth
-          error={!!errors.domicilio}
-          helperText={errors.domicilio}
-        />
-        <TextField
-          label="Garantes"
-          value={formData.garantes}
-          onChange={(e) => setFormData({ ...formData, garantes: e.target.value })}
-          margin="normal"
-          fullWidth
-          error={!!errors.garantes}
-          helperText={errors.garantes}
-        />
-        <TextField
-          label="Presupuesto"
-          value={formData.presupuesto}
-          onChange={(e) => setFormData({ ...formData, presupuesto: e.target.value })}
-          margin="normal"
-          fullWidth
-          type="number"
-          error={!!errors.presupuesto}
-          helperText={errors.presupuesto}
-        />
-        <TextField
-          label="Presupuesto UVA"
-          value={formData.presupuesto_uva}
-          onChange={(e) => setFormData({ ...formData, presupuesto_uva: e.target.value })}
-          margin="normal"
-          fullWidth
-          type="number"
-          error={!!errors.presupuesto_uva}
-          helperText={errors.presupuesto_uva}
-        />
-        <TextField
-          label="Cantidad de Cuotas"
-          value={formData.cant_cuotas}
-          onChange={(e) => setFormData({ ...formData, cant_cuotas: e.target.value })}
-          margin="normal"
-          fullWidth
-          type="number"
-          error={!!errors.cant_cuotas}
-          helperText={errors.cant_cuotas}
-        />
-        <TextField
-          label="Circunscripción"
-          value={formData.circunscripcion}
-          onChange={(e) => setFormData({ ...formData, circunscripcion: e.target.value })}
-          margin="normal"
-          fullWidth
-          type="number"
-          error={!!errors.circunscripcion}
-          helperText={errors.circunscripcion}
-        />
-        <TextField
-          label="Sección"
-          value={formData.seccion}
-          onChange={(e) => setFormData({ ...formData, seccion: e.target.value })}
-          margin="normal"
-          fullWidth
-          type="number"
-          error={!!errors.seccion}
-          helperText={errors.seccion}
-        />
-        <TextField
-          label="Manzana"
-          value={formData.manzana}
-          onChange={(e) => setFormData({ ...formData, manzana: e.target.value })}
-          margin="normal"
-          fullWidth
-          type="number"
-          error={!!errors.manzana}
-          helperText={errors.manzana}
-        />
-        <TextField
-          label="Parcela"
-          value={formData.parcela}
-          onChange={(e) => setFormData({ ...formData, parcela: e.target.value })}
-          margin="normal"
-          fullWidth
-          type="number"
-          error={!!errors.parcela}
-          helperText={errors.parcela}
-        />
-        <TextField
-          label="p_h"
-          value={formData.p_h}
-          onChange={(e) => setFormData({ ...formData, p_h: e.target.value })}
-          margin="normal"
-          fullWidth
-          type="number"
-          error={!!errors.p_h}
-          helperText={errors.p_h}
-        />
+        <form onSubmit={handleSubmit}>
+          <Autocomplete
+            options={cuitOptions}
+            getOptionLabel={(option) => `${option.cuit} - ${option.nombre}`}
+            loading={loading}
+            onInputChange={(_, newInputValue) => {
+              fetchBadecData(newInputValue);
+            }}
+            onChange={handleCuitChange}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="CUIT Solicitante"
+                margin="normal"
+                fullWidth
+                error={!!errors.cuit_solicitante}
+                helperText={errors.cuit_solicitante}
+              />
+            )}
+          />
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Legajo"
+                value={formData.legajo}
+                onChange={(e) => setFormData({ ...formData, legajo: e.target.value })}
+                margin="normal"
+                fullWidth
+                error={!!errors.legajo}
+                helperText={errors.legajo}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Domicilio"
+                value={formData.domicilio}
+                onChange={(e) => setFormData({ ...formData, domicilio: e.target.value })}
+                margin="normal"
+                fullWidth
+                error={!!errors.domicilio}
+                helperText={errors.domicilio}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Garantes"
+                value={formData.garantes}
+                onChange={(e) => setFormData({ ...formData, garantes: e.target.value })}
+                margin="normal"
+                fullWidth
+                error={!!errors.garantes}
+                helperText={errors.garantes}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Presupuesto"
+                value={formData.presupuesto}
+                onChange={(e) => setFormData({ ...formData, presupuesto: e.target.value })}
+                margin="normal"
+                fullWidth
+                type="number"
+                error={!!errors.presupuesto}
+                helperText={errors.presupuesto}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Presupuesto UVA"
+                value={formData.presupuesto_uva}
+                onChange={(e) => setFormData({ ...formData, presupuesto_uva: e.target.value })}
+                margin="normal"
+                fullWidth
+                type="number"
+                error={!!errors.presupuesto_uva}
+                helperText={errors.presupuesto_uva}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Cantidad de Cuotas"
+                value={formData.cant_cuotas}
+                onChange={(e) => setFormData({ ...formData, cant_cuotas: e.target.value })}
+                margin="normal"
+                fullWidth
+                type="number"
+                error={!!errors.cant_cuotas}
+                helperText={errors.cant_cuotas}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Circunscripción"
+                value={formData.circunscripcion}
+                onChange={(e) => setFormData({ ...formData, circunscripcion: e.target.value })}
+                margin="normal"
+                fullWidth
+                type="number"
+                error={!!errors.circunscripcion}
+                helperText={errors.circunscripcion}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Sección"
+                value={formData.seccion}
+                onChange={(e) => setFormData({ ...formData, seccion: e.target.value })}
+                margin="normal"
+                fullWidth
+                type="number"
+                error={!!errors.seccion}
+                helperText={errors.seccion}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Manzana"
+                value={formData.manzana}
+                onChange={(e) => setFormData({ ...formData, manzana: e.target.value })}
+                margin="normal"
+                fullWidth
+                type="number"
+                error={!!errors.manzana}
+                helperText={errors.manzana}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Parcela"
+                value={formData.parcela}
+                onChange={(e) => setFormData({ ...formData, parcela: e.target.value })}
+                margin="normal"
+                fullWidth
+                type="number"
+                error={!!errors.parcela}
+                helperText={errors.parcela}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="P.H."
+                value={formData.p_h}
+                onChange={(e) => setFormData({ ...formData, p_h: e.target.value })}
+                margin="normal"
+                fullWidth
+                type="number"
+                error={!!errors.p_h}
+                helperText={errors.p_h}
+              />
+            </Grid>
+          </Grid>
+        </form>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancelar</Button>

@@ -29,24 +29,26 @@ interface NuevoCreditoProps {
   onCreditoCreado: () => void;
 }
 
+const initialFormData = {
+  legajo: '',
+  domicilio: '',
+  cuit_solicitante: '',
+  garantes: '',
+  presupuesto: '',
+  presupuesto_uva: '',
+  cant_cuotas: '',
+  circunscripcion: '',
+  seccion: '',
+  manzana: '',
+  parcela: '',
+  p_h: ''
+};
+
 function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
   const { user } = useAuth();
   const [cuitOptions, setCuitOptions] = useState<BadecData[]>([]);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    legajo: '',
-    domicilio: '',
-    cuit_solicitante: '',
-    garantes: '',
-    presupuesto: '',
-    presupuesto_uva: '',
-    cant_cuotas: '',
-    circunscripcion: '',
-    seccion: '',
-    manzana: '',
-    parcela: '',
-    p_h: ''
-  });
+  const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [valorUva, setValorUva] = useState<number>(0);
 
@@ -143,6 +145,10 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
         confirmButtonText: 'Aceptar'
       });
 
+      setFormData(initialFormData);
+      setCuitOptions([]);
+      setErrors({});
+
       onCreditoCreado();
       onClose();
     } catch (error) {
@@ -180,6 +186,14 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
       }));
     }
   }, [formData.presupuesto, valorUva]);
+
+  useEffect(() => {
+    if (!open) {
+      setFormData(initialFormData);
+      setCuitOptions([]);
+      setErrors({});
+    }
+  }, [open]);
 
   return (
     <Dialog

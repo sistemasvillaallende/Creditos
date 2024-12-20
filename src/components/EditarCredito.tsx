@@ -26,11 +26,10 @@ interface EditarCreditoProps {
   open: boolean;
   onClose: () => void;
   idCredito: number;
-  legajo: number;
   onCreditoEditado: () => void;
 }
 
-export default function EditarCredito({ open, onClose, idCredito, legajo, onCreditoEditado }: EditarCreditoProps) {
+export default function EditarCredito({ open, onClose, idCredito, onCreditoEditado }: EditarCreditoProps) {
   const { user } = useAuth();
   const [cuitOptions, setCuitOptions] = useState<BadecData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -161,7 +160,11 @@ export default function EditarCredito({ open, onClose, idCredito, legajo, onCred
             parcela: parseInt(formData.parcela),
             p_h: parseInt(formData.p_h)
           },
-          auditoria: createAuditoriaData('modificacion_credito', `Modificación del crédito ${idCredito}`)
+          auditoria: createAuditoriaData(
+            'modificacion_credito',
+            `Modificación del crédito ${idCredito}`,
+            user?.nombre_completo || 'Usuario no identificado'
+          )
         }
       );
 
@@ -344,7 +347,15 @@ export default function EditarCredito({ open, onClose, idCredito, legajo, onCred
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancelar</Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary">
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          onClick={(e) => {
+            e.preventDefault();
+            handleSubmit(e as any);
+          }}
+        >
           Guardar
         </Button>
       </DialogActions>

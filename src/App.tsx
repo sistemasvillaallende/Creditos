@@ -347,7 +347,10 @@ function App() {
               <EditIcon />
             </IconButton>
             <IconButton
-              onClick={() => handleAltaBaja(params.row.id_credito_materiales)}
+              onClick={() => params.row.baja ?
+                handleAltaBaja(params.row.id_credito_materiales) :
+                handleDelete(params.row.legajo, params.row.id_credito_materiales)
+              }
               color={params.row.baja ? "success" : "error"}
             >
               {params.row.baja ? <UploadIcon /> : <DeleteIcon />}
@@ -430,7 +433,6 @@ function App() {
           open={openEditarCredito}
           onClose={() => setOpenEditarCredito(false)}
           idCredito={selectedCredito || 0}
-          legajo={selectedLegajo}
           onCreditoEditado={() => {
             fetchAllCreditos();
           }}

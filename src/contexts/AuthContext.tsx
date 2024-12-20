@@ -59,8 +59,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.log('nombre_completo existe?:', !!userData.nombre_completo);
 
           if (userData.nombre_completo) {
-            console.log('Estableciendo usuario:', userData);
-            setUser(userData as AuthUser);
+            const authUser: AuthUser = {
+              administrador: userData.administrador || '',
+              apellido: userData.apellido || '',
+              cod_oficina: userData.cod_oficina || '',
+              cod_usuario: userData.cod_usuario || '',
+              cuit: userData.cuit || '',
+              cuit_formateado: userData.cuit_formateado || '',
+              legajo: userData.legajo || '',
+              nombre: userData.nombre || '',
+              nombre_completo: userData.nombre_completo,
+              nombre_oficina: userData.nombre_oficina || '',
+              nombre_usuario: userData.nombre_usuario || '',
+              SesionHash: userData.SesionHash || ''
+            };
+            setUser(authUser);
           } else {
             console.log('No se encontró nombre_completo, estableciendo null');
             setUser(null);

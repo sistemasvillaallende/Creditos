@@ -99,8 +99,7 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async () => {
     if (!validateForm()) return;
 
     try {
@@ -350,7 +349,14 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancelar</Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary">
+        <Button
+          onClick={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+          variant="contained"
+          color="primary"
+        >
           Guardar
         </Button>
       </DialogActions>

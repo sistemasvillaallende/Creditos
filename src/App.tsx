@@ -195,13 +195,25 @@ function App() {
   };
 
   const columns: GridColDef[] = [
-    { field: 'id_credito_materiales', headerName: 'ID', width: 90 },
-    { field: 'legajo', headerName: 'Legajo', width: 100 },
-    { field: 'domicilio', headerName: 'Domicilio', width: 200 },
+    { field: 'id_credito_materiales', headerName: 'ID', width: 50 },
+    {
+      field: 'legajo',
+      headerName: 'Legajo',
+      width: 80
+    },
+    {
+      field: 'nombre',
+      headerName: 'Nombre',
+      width: 250,
+      renderCell: (params) => (
+        params.value || 'Sin nombre'
+      )
+    },
+    { field: 'domicilio', headerName: 'Domicilio', width: 150 },
     {
       field: 'fecha_alta',
       headerName: 'Fecha Alta',
-      width: 150,
+      width: 100,
       renderCell: (params) => {
         if (params.row.fecha_alta) {
           return new Date(params.row.fecha_alta).toLocaleDateString('es-AR');
@@ -223,7 +235,7 @@ function App() {
     {
       field: 'presupuesto_uva',
       headerName: 'Presupuesto UVA (saldo inicial UVA)',
-      width: 130,
+      width: 100,
       align: 'left',
       headerAlign: 'left',
       renderCell: (params) => {
@@ -245,12 +257,6 @@ function App() {
           </span>
         );
       }
-    },
-    {
-      field: 'nombre',
-      headerName: 'Nombre',
-      width: 200,
-      renderCell: (params) => params.value || 'Sin nombre'
     },
     {
       field: 'acciones',

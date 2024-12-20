@@ -59,24 +59,28 @@ function App() {
       if (Array.isArray(response.data)) {
         const creditosConNombres = await Promise.all(
           response.data.map(async (credito: Credito) => {
-            try {
-              const badecResponse = await axios.get(
-                `${import.meta.env.VITE_API_BASE_URL}Badec/GetBadecByCuit?cuit=${credito.cuit_solicitante}`
-              );
-              return {
-                ...credito,
-                presupuesto: Number(credito.presupuesto),
-                presupuesto_uva: Number(credito.presupuesto_uva),
-                nombre: badecResponse.data[0]?.nombre || 'Sin nombre'
-              };
-            } catch (error) {
-              return {
-                ...credito,
-                presupuesto: Number(credito.presupuesto),
-                presupuesto_uva: Number(credito.presupuesto_uva),
-                nombre: 'Sin nombre'
-              };
+            let nombre = 'Sin nombre';
+
+            // Buscar nombre solo por CUIT
+            if (credito.cuit_solicitante) {
+              try {
+                const badecResponse = await axios.get(
+                  `${import.meta.env.VITE_API_BASE_URL}Badec/GetBadecByCuit?cuit=${credito.cuit_solicitante}`
+                );
+                if (badecResponse.data && badecResponse.data.length > 0 && badecResponse.data[0].nombre) {
+                  nombre = badecResponse.data[0].nombre;
+                }
+              } catch (error) {
+                console.error('Error al obtener nombre por CUIT:', error);
+              }
             }
+
+            return {
+              ...credito,
+              presupuesto: Number(credito.presupuesto),
+              presupuesto_uva: Number(credito.presupuesto_uva),
+              nombre: nombre
+            };
           })
         );
         setCreditos(creditosConNombres);

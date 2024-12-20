@@ -14,6 +14,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import UploadIcon from '@mui/icons-material/Upload';
 import { useAuth } from './contexts/AuthContext';
 import AccessDenied from './components/AccessDenied';
+import { createAuditoriaData } from './utils/auditoria';
 
 interface Credito {
   id_credito_materiales: number;
@@ -38,7 +39,7 @@ interface Credito {
 }
 
 function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [creditos, setCreditos] = useState<Credito[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCredito, setSelectedCredito] = useState<number | null>(null);
@@ -111,14 +112,33 @@ function App() {
       );
 
       if (Array.isArray(response.data.resultado)) {
-        const creditosFormateados = response.data.resultado.map((credito: Credito) => {
-          return {
-            ...credito,
-            presupuesto: Number(credito.presupuesto),
-            presupuesto_uva: Number(credito.presupuesto_uva)
-          };
-        });
-        setCreditos(creditosFormateados);
+        const creditosConNombres = await Promise.all(
+          response.data.resultado.map(async (credito: Credito) => {
+            let nombre = 'Sin nombre';
+
+            // Buscar nombre por CUIT
+            if (credito.cuit_solicitante) {
+              try {
+                const badecResponse = await axios.get(
+                  `${import.meta.env.VITE_API_BASE_URL}Badec/GetBadecByCuit?cuit=${credito.cuit_solicitante}`
+                );
+                if (badecResponse.data && badecResponse.data.length > 0 && badecResponse.data[0].nombre) {
+                  nombre = badecResponse.data[0].nombre;
+                }
+              } catch (error) {
+                console.error('Error al obtener nombre por CUIT:', error);
+              }
+            }
+
+            return {
+              ...credito,
+              presupuesto: Number(credito.presupuesto),
+              presupuesto_uva: Number(credito.presupuesto_uva),
+              nombre: nombre
+            };
+          })
+        );
+        setCreditos(creditosConNombres);
       }
     } catch (error) {
       console.error('Error al cargar los créditos:', error);
@@ -166,21 +186,13 @@ function App() {
 
     if (observaciones) {
       try {
-        const payload = {
-          id_auditoria: 0,
-          fecha: new Date().toISOString(),
-          usuario: "sistema",
-          proceso: "baja",
-          identificacion: "web",
-          autorizaciones: "",
-          observaciones: observaciones,
-          detalle: "",
-          ip: ""
-        };
-
         await axios.put(
           `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/BajaCredito?legajo=${legajo}&id_credito_materiales=${id_credito_materiales}`,
-          payload
+          createAuditoriaData(
+            'baja_credito',
+            observaciones,
+            user?.nombre_completo || 'Usuario no identificado'
+          )
         );
 
         Swal.fire(
@@ -197,6 +209,43 @@ function App() {
           'Hubo un error al eliminar el crédito',
           'error'
         );
+      }
+    }
+  };
+
+  const handleAltaBaja = async (id_credito_materiales: number) => {
+    const { value: observaciones } = await Swal.fire({
+      title: '¿Está seguro de dar de alta este crédito?',
+      text: "Esta acción volverá a activar el crédito",
+      icon: 'warning',
+      input: 'text',
+      inputLabel: 'Auditoría',
+      inputPlaceholder: 'Ingrese el motivo del alta',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, dar de alta',
+      cancelButtonText: 'Cancelar',
+      inputValidator: (value) => {
+        if (!value) {
+          return 'Debe ingresar un motivo para el alta';
+        }
+        return null;
+      }
+    });
+
+    if (observaciones) {
+      try {
+        await axios.put(
+          `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/AltaCredito?id_credito_materiales=${id_credito_materiales}`,
+          createAuditoriaData('alta_credito', observaciones, user?.nombre_completo || 'Usuario no identificado')
+        );
+
+        Swal.fire('Éxito', 'El crédito ha sido dado de alta correctamente', 'success');
+        fetchAllCreditos();
+      } catch (error) {
+        console.error('Error al dar de alta el crédito:', error);
+        Swal.fire('Error', 'Hubo un error al dar de alta el crédito', 'error');
       }
     }
   };
@@ -270,59 +319,6 @@ function App() {
       headerName: 'Acciones',
       width: 160,
       renderCell: (params) => {
-        const handleAltaBaja = async (id_credito_materiales: number) => {
-          if (params.row.baja) {
-            const { value: observaciones } = await Swal.fire({
-              title: '¿Está seguro de dar de alta este crédito?',
-              text: "Esta acción volverá a activar el crédito",
-              icon: 'warning',
-              input: 'text',
-              inputLabel: 'Auditoría',
-              inputPlaceholder: 'Ingrese el motivo del alta',
-              showCancelButton: true,
-              confirmButtonColor: '#3085d6',
-              cancelButtonColor: '#d33',
-              confirmButtonText: 'Sí, dar de alta',
-              cancelButtonText: 'Cancelar',
-              inputValidator: (value) => {
-                if (!value) {
-                  return 'Debe ingresar un motivo para el alta';
-                }
-                return null;
-              }
-            });
-
-            if (observaciones) {
-              try {
-                const payload = {
-                  id_auditoria: 0,
-                  fecha: new Date().toISOString(),
-                  usuario: "sistema",
-                  proceso: "alta",
-                  identificacion: "web",
-                  autorizaciones: "",
-                  observaciones: observaciones,
-                  detalle: "",
-                  ip: ""
-                };
-
-                await axios.put(
-                  `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/AltaCredito?id_credito_materiales=${id_credito_materiales}`,
-                  payload
-                );
-
-                Swal.fire('Éxito', 'El crédito ha sido dado de alta correctamente', 'success');
-                fetchAllCreditos();
-              } catch (error) {
-                console.error('Error al dar de alta el crédito:', error);
-                Swal.fire('Error', 'Hubo un error al dar de alta el crédito', 'error');
-              }
-            }
-          } else {
-            handleDelete(params.row.legajo, id_credito_materiales);
-          }
-        };
-
         return (
           <>
             <IconButton

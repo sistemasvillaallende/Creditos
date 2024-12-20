@@ -10,6 +10,8 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { createAuditoriaData } from '../utils/auditoria';
+import { useAuth } from '../contexts/AuthContext';
 
 interface BadecData {
   nro_bad: number;
@@ -28,6 +30,7 @@ interface EditarCreditoProps {
 }
 
 export default function EditarCredito({ open, onClose, idCredito, legajo, onCreditoEditado }: EditarCreditoProps) {
+  const { user } = useAuth();
   const [cuitOptions, setCuitOptions] = useState<BadecData[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -37,7 +40,12 @@ export default function EditarCredito({ open, onClose, idCredito, legajo, onCred
     garantes: '',
     presupuesto: '',
     presupuesto_uva: '',
-    cant_cuotas: ''
+    cant_cuotas: '',
+    circunscripcion: '',
+    seccion: '',
+    manzana: '',
+    parcela: '',
+    p_h: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -78,6 +86,11 @@ export default function EditarCredito({ open, onClose, idCredito, legajo, onCred
     if (!formData.presupuesto) newErrors.presupuesto = 'El presupuesto es obligatorio';
     if (!formData.presupuesto_uva) newErrors.presupuesto_uva = 'El presupuesto UVA es obligatorio';
     if (!formData.cant_cuotas) newErrors.cant_cuotas = 'La cantidad de cuotas es obligatoria';
+    if (!formData.circunscripcion) newErrors.circunscripcion = 'La circunscripción es obligatoria';
+    if (!formData.seccion) newErrors.seccion = 'La sección es obligatoria';
+    if (!formData.manzana) newErrors.manzana = 'La manzana es obligatoria';
+    if (!formData.parcela) newErrors.parcela = 'La parcela es obligatoria';
+    if (!formData.p_h) newErrors.p_h = 'El p_h es obligatorio';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -99,7 +112,12 @@ export default function EditarCredito({ open, onClose, idCredito, legajo, onCred
             garantes: creditoData.garantes,
             presupuesto: creditoData.presupuesto.toString(),
             presupuesto_uva: creditoData.presupuesto_uva.toString(),
-            cant_cuotas: creditoData.cant_cuotas.toString()
+            cant_cuotas: creditoData.cant_cuotas.toString(),
+            circunscripcion: creditoData.circunscripcion.toString(),
+            seccion: creditoData.seccion.toString(),
+            manzana: creditoData.manzana.toString(),
+            parcela: creditoData.parcela.toString(),
+            p_h: creditoData.p_h.toString()
           });
         } catch (error) {
           console.error('Error al cargar datos del crédito:', error);
@@ -109,47 +127,41 @@ export default function EditarCredito({ open, onClose, idCredito, legajo, onCred
     fetchCreditoData();
   }, [idCredito]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (!validateForm()) return;
 
     try {
-      const payload = {
-        creditoMateriales: {
-          id_credito_materiales: idCredito,
-          legajo: parseInt(formData.legajo),
-          domicilio: formData.domicilio,
-          cuit_solicitante: formData.cuit_solicitante,
-          garantes: formData.garantes,
-          presupuesto: parseFloat(formData.presupuesto),
-          presupuesto_uva: parseFloat(formData.presupuesto_uva),
-          cant_cuotas: parseInt(formData.cant_cuotas),
-          valor_cuota_uva: 0,
-          id_uva: 0,
-          id_estado: 0,
-          per_ultimo: "string",
-          con_deuda: 0,
-          saldo_adeudado: 0,
-          proximo_vencimiento: new Date().toISOString(),
-          baja: false,
-          fecha_baja: null,
-          fecha_alta: new Date().toISOString()
-        },
-        auditoria: {
-          id_auditoria: 0,
-          fecha: new Date().toISOString(),
-          usuario: "sistema",
-          proceso: "actualización",
-          identificacion: "web",
-          autorizaciones: "",
-          observaciones: "",
-          detalle: "",
-          ip: ""
-        }
-      };
-
       await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/UpdateCredito?legajo=${legajo}&id_credito_materiales=${idCredito}`,
-        payload
+        `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/UpdateCredito?legajo=${formData.legajo}&id_credito_materiales=${idCredito}`,
+        {
+          creditoMateriales: {
+            id_credito_materiales: idCredito,
+            legajo: parseInt(formData.legajo),
+            domicilio: formData.domicilio,
+            fecha_alta: new Date().toISOString(),
+            baja: false,
+            fecha_baja: null,
+            cuit_solicitante: formData.cuit_solicitante,
+            garantes: formData.garantes,
+            presupuesto: parseFloat(formData.presupuesto),
+            presupuesto_uva: parseFloat(formData.presupuesto_uva),
+            cant_cuotas: parseInt(formData.cant_cuotas),
+            valor_cuota_uva: 0,
+            id_uva: 0,
+            id_estado: 0,
+            per_ultimo: "string",
+            con_deuda: 0,
+            saldo_adeudado: 0,
+            proximo_vencimiento: new Date().toISOString(),
+            circunscripcion: parseInt(formData.circunscripcion),
+            seccion: parseInt(formData.seccion),
+            manzana: parseInt(formData.manzana),
+            parcela: parseInt(formData.parcela),
+            p_h: parseInt(formData.p_h)
+          },
+          auditoria: createAuditoriaData('modificacion_credito', `Modificación del crédito ${idCredito}`)
+        }
       );
 
       Swal.fire({
@@ -251,6 +263,56 @@ export default function EditarCredito({ open, onClose, idCredito, legajo, onCred
           type="number"
           error={!!errors.cant_cuotas}
           helperText={errors.cant_cuotas}
+        />
+        <TextField
+          label="Circunscripción"
+          value={formData.circunscripcion}
+          onChange={(e) => setFormData({ ...formData, circunscripcion: e.target.value })}
+          margin="normal"
+          fullWidth
+          type="number"
+          error={!!errors.circunscripcion}
+          helperText={errors.circunscripcion}
+        />
+        <TextField
+          label="Sección"
+          value={formData.seccion}
+          onChange={(e) => setFormData({ ...formData, seccion: e.target.value })}
+          margin="normal"
+          fullWidth
+          type="number"
+          error={!!errors.seccion}
+          helperText={errors.seccion}
+        />
+        <TextField
+          label="Manzana"
+          value={formData.manzana}
+          onChange={(e) => setFormData({ ...formData, manzana: e.target.value })}
+          margin="normal"
+          fullWidth
+          type="number"
+          error={!!errors.manzana}
+          helperText={errors.manzana}
+        />
+        <TextField
+          label="Parcela"
+          value={formData.parcela}
+          onChange={(e) => setFormData({ ...formData, parcela: e.target.value })}
+          margin="normal"
+          fullWidth
+          type="number"
+          error={!!errors.parcela}
+          helperText={errors.parcela}
+        />
+        <TextField
+          label="p_h"
+          value={formData.p_h}
+          onChange={(e) => setFormData({ ...formData, p_h: e.target.value })}
+          margin="normal"
+          fullWidth
+          type="number"
+          error={!!errors.p_h}
+          helperText={errors.p_h}
         />
       </DialogContent>
       <DialogActions>

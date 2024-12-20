@@ -12,6 +12,8 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { createAuditoriaData } from '../utils/auditoria';
+import { useAuth } from '../contexts/AuthContext';
 
 interface BadecData {
   nro_bad: number;
@@ -28,6 +30,7 @@ interface NuevoCreditoProps {
 }
 
 function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
+  const { user } = useAuth();
   const [cuitOptions, setCuitOptions] = useState<BadecData[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -94,48 +97,44 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (!validateForm()) return;
 
     try {
-      const creditoData = {
-        creditoMateriales: {
-          id_credito_materiales: 0,
-          legajo: parseInt(formData.legajo),
-          domicilio: formData.domicilio,
-          baja: false,
-          cuit_solicitante: formData.cuit_solicitante,
-          garantes: formData.garantes,
-          presupuesto: parseFloat(formData.presupuesto),
-          presupuesto_uva: parseFloat(formData.presupuesto_uva),
-          cant_cuotas: parseInt(formData.cant_cuotas),
-          valor_cuota_uva: 0,
-          id_uva: 0,
-          id_estado: 0,
-          per_ultimo: "string",
-          con_deuda: 0,
-          saldo_adeudado: 0,
-          proximo_vencimiento: new Date().toISOString(),
-          circunscripcion: parseInt(formData.circunscripcion),
-          seccion: parseInt(formData.seccion),
-          manzana: parseInt(formData.manzana),
-          parcela: parseInt(formData.parcela),
-          p_h: parseInt(formData.p_h)
-        },
-        auditoria: {
-          id_auditoria: 0,
-          fecha: new Date().toISOString(),
-          usuario: "string",
-          proceso: "string",
-          identificacion: "string",
-          autorizaciones: "string",
-          observaciones: "string",
-          detalle: "string",
-          ip: "string"
+      await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/InsertNuevoCredito`,
+        {
+          creditoMateriales: {
+            id_credito_materiales: 0,
+            legajo: parseInt(formData.legajo),
+            domicilio: formData.domicilio,
+            baja: false,
+            cuit_solicitante: formData.cuit_solicitante,
+            garantes: formData.garantes,
+            presupuesto: parseFloat(formData.presupuesto),
+            presupuesto_uva: parseFloat(formData.presupuesto_uva),
+            cant_cuotas: parseInt(formData.cant_cuotas),
+            valor_cuota_uva: 0,
+            id_uva: 0,
+            id_estado: 0,
+            per_ultimo: "string",
+            con_deuda: 0,
+            saldo_adeudado: 0,
+            proximo_vencimiento: new Date().toISOString(),
+            circunscripcion: parseInt(formData.circunscripcion),
+            seccion: parseInt(formData.seccion),
+            manzana: parseInt(formData.manzana),
+            parcela: parseInt(formData.parcela),
+            p_h: parseInt(formData.p_h)
+          },
+          auditoria: createAuditoriaData(
+            'alta_credito',
+            'Alta de nuevo crédito',
+            user?.nombre_completo || 'Usuario no identificado'
+          )
         }
-      };
-
-      await axios.post(`${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/InsertNuevoCredito`, creditoData);
+      );
 
       Swal.fire({
         title: 'Éxito',

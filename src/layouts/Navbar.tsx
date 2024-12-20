@@ -3,7 +3,7 @@ import LogoPablo from '../assets/LogoPablo.png';
 
 function Navbar() {
   return (
-    <AppBar position="static" sx={{ backgroundColor: '#f5f5f5', color: 'text.primary' }}>
+    <AppBar position="static">
       <Toolbar>
         <Box display="flex" alignItems="center" gap={2}>
           <img

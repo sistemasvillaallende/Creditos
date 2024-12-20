@@ -12,6 +12,8 @@ import EditarCredito from './components/EditarCredito';
 import MainLayout from './layouts/MainLayout';
 import SearchIcon from '@mui/icons-material/Search';
 import UploadIcon from '@mui/icons-material/Upload';
+import { useAuth } from './contexts/AuthContext';
+import AccessDenied from './components/AccessDenied';
 
 interface Credito {
   id_credito_materiales: number;
@@ -36,6 +38,7 @@ interface Credito {
 }
 
 function App() {
+  const { isAuthenticated } = useAuth();
   const [creditos, setCreditos] = useState<Credito[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCredito, setSelectedCredito] = useState<number | null>(null);
@@ -358,6 +361,10 @@ function App() {
       },
     },
   ];
+
+  if (!isAuthenticated) {
+    return <AccessDenied />;
+  }
 
   return (
     <MainLayout>

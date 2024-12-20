@@ -198,18 +198,18 @@ export default function EditarCredito({ open, onClose, idCredito, legajo, onCred
         <TextField
           label="Legajo"
           value={formData.legajo}
+          onChange={(e) => setFormData({ ...formData, legajo: e.target.value })}
           margin="normal"
           fullWidth
-          disabled
           error={!!errors.legajo}
           helperText={errors.legajo}
         />
         <TextField
           label="Domicilio"
           value={formData.domicilio}
+          onChange={(e) => setFormData({ ...formData, domicilio: e.target.value })}
           margin="normal"
           fullWidth
-          disabled
           error={!!errors.domicilio}
           helperText={errors.domicilio}
         />

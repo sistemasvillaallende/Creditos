@@ -32,6 +32,7 @@ interface Credito {
   con_deuda: number;
   saldo_adeudado: number;
   proximo_vencimiento: string;
+  nombre?: string;
 }
 
 function App() {
@@ -56,14 +57,29 @@ function App() {
       );
 
       if (Array.isArray(response.data)) {
-        const creditosFormateados = response.data.map((credito: Credito) => {
-          return {
-            ...credito,
-            presupuesto: Number(credito.presupuesto),
-            presupuesto_uva: Number(credito.presupuesto_uva)
-          };
-        });
-        setCreditos(creditosFormateados);
+        const creditosConNombres = await Promise.all(
+          response.data.map(async (credito: Credito) => {
+            try {
+              const badecResponse = await axios.get(
+                `${import.meta.env.VITE_API_BASE_URL}Badec/GetBadecByCuit?cuit=${credito.cuit_solicitante}`
+              );
+              return {
+                ...credito,
+                presupuesto: Number(credito.presupuesto),
+                presupuesto_uva: Number(credito.presupuesto_uva),
+                nombre: badecResponse.data[0]?.nombre || 'Sin nombre'
+              };
+            } catch (error) {
+              return {
+                ...credito,
+                presupuesto: Number(credito.presupuesto),
+                presupuesto_uva: Number(credito.presupuesto_uva),
+                nombre: 'Sin nombre'
+              };
+            }
+          })
+        );
+        setCreditos(creditosConNombres);
       }
     } catch (error) {
       console.error('Error al cargar los créditos:', error);
@@ -229,6 +245,12 @@ function App() {
           </span>
         );
       }
+    },
+    {
+      field: 'nombre',
+      headerName: 'Nombre',
+      width: 200,
+      renderCell: (params) => params.value || 'Sin nombre'
     },
     {
       field: 'acciones',

@@ -15,6 +15,8 @@ import UploadIcon from '@mui/icons-material/Upload';
 import { useAuth } from './contexts/AuthContext';
 import AccessDenied from './components/AccessDenied';
 import { createAuditoriaData } from './utils/auditoria';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import CuentaCorriente from './components/CuentaCorriente';
 
 interface Credito {
   id_credito_materiales: number;
@@ -53,6 +55,7 @@ function App() {
   const [selectedCuit, setSelectedCuit] = useState<string>('');
   const [openEditarCredito, setOpenEditarCredito] = useState(false);
   const [searchLegajo, setSearchLegajo] = useState<string>('');
+  const [openCuentaCorriente, setOpenCuentaCorriente] = useState(false);
 
   const fetchAllCreditos = async () => {
     try {
@@ -162,6 +165,7 @@ function App() {
   useEffect(() => {
     fetchAllCreditos();
   }, []);
+
 
   const handleDelete = async (legajo: number, id_credito_materiales: number) => {
     const { value: observaciones } = await Swal.fire({
@@ -317,7 +321,7 @@ function App() {
     {
       field: 'acciones',
       headerName: 'Acciones',
-      width: 160,
+      width: 200,
       renderCell: (params) => {
         return (
           <>
@@ -335,6 +339,17 @@ function App() {
               color="primary"
             >
               <VisibilityIcon />
+            </IconButton>
+            <IconButton
+              onClick={() => {
+                setSelectedCredito(params.row.id_credito_materiales);
+                setSelectedLegajo(params.row.legajo);
+                setSelectedCuit(params.row.cuit_solicitante);
+                setOpenCuentaCorriente(true);
+              }}
+              color="info"
+            >
+              <AccountBalanceIcon />
             </IconButton>
             <IconButton
               onClick={() => {
@@ -436,6 +451,14 @@ function App() {
           onCreditoEditado={() => {
             fetchAllCreditos();
           }}
+        />
+        <CuentaCorriente
+          open={openCuentaCorriente}
+          onClose={() => setOpenCuentaCorriente(false)}
+          idCredito={selectedCredito || 0}
+          legajo={selectedLegajo}
+          cuit={selectedCuit}
+          nombre={creditos.find(c => c.id_credito_materiales === selectedCredito)?.nombre || ''}
         />
       </Container>
     </MainLayout>

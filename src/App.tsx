@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import axios from 'axios';
-import { Container, Typography, IconButton, Box, Button, TextField, InputAdornment } from '@mui/material';
+import { Container, Typography, IconButton, Box, Button, TextField, InputAdornment, Grid, MenuItem } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -54,7 +54,8 @@ function App() {
   const [selectedLegajo, setSelectedLegajo] = useState<number>(0);
   const [selectedCuit, setSelectedCuit] = useState<string>('');
   const [openEditarCredito, setOpenEditarCredito] = useState(false);
-  const [searchLegajo, setSearchLegajo] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [searchType, setSearchType] = useState<'legajo' | 'nombre'>('legajo');
   const [openCuentaCorriente, setOpenCuentaCorriente] = useState(false);
 
   const fetchAllCreditos = async () => {
@@ -80,48 +81,44 @@ function App() {
     }
   };
 
-  const fetchCreditosByLegajo = async (legajo: string) => {
+  const fetchCreditosBySearch = async (searchTerm: string, searchType: 'legajo' | 'nombre') => {
     try {
+      console.log('Buscando con parámetros:', {
+        buscarPor: searchType,
+        strParametro: searchTerm.trim(),
+        pagina: 1,
+        registros_por_pagina: 10
+      });
+
       const response = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/GetCreditoMPaginado`,
         {
           params: {
-            buscarPor: 'legajo',
-            strParametro: legajo,
+            buscarPor: searchType,
+            strParametro: searchTerm.trim().toLowerCase(),
             pagina: 1,
             registros_por_pagina: 10
           }
         }
       );
 
-      if (Array.isArray(response.data.resultado)) {
-        const creditosConNombres = await Promise.all(
-          response.data.resultado.map(async (credito: Credito) => {
-            let nombre = 'Sin nombre';
+      if (response.status === 204) {
+        console.log('No se encontraron resultados');
+        setCreditos([]);
+        return;
+      }
 
-            // Buscar nombre por CUIT
-            if (credito.cuit_solicitante) {
-              try {
-                const badecResponse = await axios.get(
-                  `${import.meta.env.VITE_API_BASE_URL}Badec/GetBadecByCuit?cuit=${credito.cuit_solicitante}`
-                );
-                if (badecResponse.data && badecResponse.data.length > 0 && badecResponse.data[0].nombre) {
-                  nombre = badecResponse.data[0].nombre;
-                }
-              } catch (error) {
-                console.error('Error al obtener nombre por CUIT:', error);
-              }
-            }
-
-            return {
-              ...credito,
-              presupuesto: Number(credito.presupuesto),
-              presupuesto_uva: Number(credito.presupuesto_uva),
-              nombre: nombre
-            };
-          })
-        );
-        setCreditos(creditosConNombres);
+      if (response.data && response.data.resultado) {
+        const creditosFormateados = response.data.resultado.map((credito: Credito) => ({
+          ...credito,
+          presupuesto: Number(credito.presupuesto),
+          presupuesto_uva: Number(credito.presupuesto_uva),
+          nombre: credito.nombre || 'Sin nombre'
+        }));
+        setCreditos(creditosFormateados);
+      } else {
+        console.log('Respuesta inesperada:', response.data);
+        setCreditos([]);
       }
     } catch (error) {
       console.error('Error al cargar los créditos:', error);
@@ -132,11 +129,11 @@ function App() {
   };
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const legajo = event.target.value;
-    setSearchLegajo(legajo);
+    const value = event.target.value;
+    setSearchTerm(value);
 
-    if (legajo.trim()) {
-      fetchCreditosByLegajo(legajo);
+    if (value.trim()) {
+      fetchCreditosBySearch(value, searchType);
     } else {
       fetchAllCreditos();
     }
@@ -377,21 +374,38 @@ function App() {
         </Box>
 
         <Box mb={2}>
-          <TextField
-            fullWidth
-            variant="outlined"
-            label="Buscar por legajo"
-            value={searchLegajo}
-            onChange={handleSearch}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-            placeholder="Ingrese el número de legajo"
-          />
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={3}>
+              <TextField
+                select
+                fullWidth
+                value={searchType}
+                onChange={(e) => setSearchType(e.target.value as 'legajo' | 'nombre')}
+                variant="outlined"
+                label="Buscar por"
+              >
+                <MenuItem value="legajo">Legajo</MenuItem>
+                <MenuItem value="nombre">Nombre</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid item xs={12} md={9}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                label={`Buscar por ${searchType}`}
+                value={searchTerm}
+                onChange={handleSearch}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                placeholder={`Ingrese ${searchType === 'legajo' ? 'el número de legajo' : 'el nombre'}`}
+              />
+            </Grid>
+          </Grid>
         </Box>
 
         <div style={{ height: 400, width: '100%' }}>

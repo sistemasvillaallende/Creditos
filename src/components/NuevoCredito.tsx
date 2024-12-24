@@ -51,6 +51,7 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [valorUva, setValorUva] = useState<number>(0);
+  const [selectedNombre, setSelectedNombre] = useState('');
 
   const fetchBadecData = async (cuit: string) => {
     if (cuit.length < 3) return;
@@ -70,6 +71,7 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
 
   const handleCuitChange = (_: React.SyntheticEvent, newValue: BadecData | null) => {
     if (newValue) {
+      setSelectedNombre(newValue.nombre);
       setFormData({
         ...formData,
         cuit_solicitante: newValue.cuit,
@@ -112,6 +114,7 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
             domicilio: formData.domicilio,
             baja: false,
             cuit_solicitante: formData.cuit_solicitante,
+            nombre: selectedNombre,
             garantes: formData.garantes,
             presupuesto: parseFloat(formData.presupuesto),
             presupuesto_uva: parseFloat(formData.presupuesto_uva),

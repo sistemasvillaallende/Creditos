@@ -132,6 +132,19 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
     if (!validateForm()) return;
 
     try {
+      // Obtener el nombre del solicitante
+      let nombreSolicitante = '';
+      try {
+        const badecResponse = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}Badec/GetBadecByCuit?cuit=${formData.cuit_solicitante}`
+        );
+        if (badecResponse.data && badecResponse.data.length > 0) {
+          nombreSolicitante = badecResponse.data[0].nombre;
+        }
+      } catch (error) {
+        console.error('Error al obtener nombre por CUIT:', error);
+      }
+
       await axios.put(
         `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/UpdateCredito?legajo=${formData.legajo}&id_credito_materiales=${idCredito}`,
         {
@@ -143,6 +156,7 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
             baja: false,
             fecha_baja: null,
             cuit_solicitante: formData.cuit_solicitante,
+            nombre: nombreSolicitante,
             garantes: formData.garantes,
             presupuesto: parseFloat(formData.presupuesto),
             presupuesto_uva: parseFloat(formData.presupuesto_uva),

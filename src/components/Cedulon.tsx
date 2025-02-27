@@ -4,7 +4,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typogra
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import JsBarcode from 'jsbarcode';
-import LogoPablo from '../assets/LogoPablo.png';
+import LogoPablo from '../assets/logos-cedulon.png';
 
 interface CedulonProps {
   open: boolean;
@@ -86,15 +86,19 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
   const generarPDF = () => {
     const doc = new jsPDF();
 
+    // Crear el canvas para el código de barras
+    const canvas = document.createElement('canvas');
+    const barcodeWidth = 60;
+    const barcodeHeight = 25;
+
     // Función para generar el encabezado
     const generarEncabezado = () => {
       // Logo y código de barras
-      const logoWidth = 40;
+      const logoWidth = 80;
       const logoHeight = 12;
       doc.addImage(LogoPablo, 'PNG', 15, 10, logoWidth, logoHeight);
 
       // Generar código de barras
-      const canvas = document.createElement('canvas');
       JsBarcode(canvas, nroCedulon.toString(), {
         format: "CODE128",
         width: 1.5,
@@ -118,7 +122,7 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
       doc.setFontSize(9);
       doc.text(
         `Cedulón # ${nroCedulon}`,
-        doc.internal.pageSize.width - barcodeWidth - 15,
+        doc.internal.pageSize.width - barcodeWidth - 10,
         40,
         { align: 'left' }
       );
@@ -128,10 +132,12 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
       doc.setFontSize(11);
       doc.text('Datos del Contribuyente:', 15, 45);
       doc.setFontSize(9);
-      doc.text(`Nombre: ${cabecera?.nombre}`, 15, 52);
-      doc.text(`CUIT: ${cabecera?.cuit}`, 15, 58);
-      doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, 15, 64);
-      doc.text(`Monto a Pagar: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, 15, 70);
+      doc.text(`Nombre: ${cabecera?.nombre}`, 15, 50);
+      doc.text(`CUIT: ${cabecera?.cuit}`, 15, 55);
+      doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, 15, 60);
+      doc.text(`Monto a Pagar: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, 15, 65);
+      doc.text(`Domicilio: ----`, 15, 70);
+      doc.text(`Legajo: ----`, 15, 75);
     };
 
     // Generar encabezado
@@ -179,11 +185,21 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
     doc.text('TALÓN PARA EL CONTRIBUYENTE', 15, talonY + 5);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.text(`Cedulón #: ${nroCedulon}`, 15, talonY + 12);
-    doc.text(`Nombre: ${cabecera?.nombre}`, 15, talonY + 19);
-    doc.text(`CUIT: ${cabecera?.cuit}`, 15, talonY + 26);
-    doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, 15, talonY + 33);
-    doc.text(`Monto: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, 15, talonY + 40);
+    doc.text(`Cedulón #: ${nroCedulon}`, 15, talonY + 10);
+    doc.text(`Nombre: ${cabecera?.nombre}`, 15, talonY + 15);
+    doc.text(`CUIT: ${cabecera?.cuit}`, 15, talonY + 20);
+    doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, 15, talonY + 25);
+    doc.text(`Monto: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, 15, talonY + 30);
+
+    // Agregar código de barras debajo del monto
+    doc.addImage(
+      canvas.toDataURL(),
+      'PNG',
+      15,
+      talonY + 35,
+      barcodeWidth,
+      barcodeHeight
+    );
 
     // Talón para la municipalidad
     doc.setFont('helvetica', 'bold');
@@ -191,11 +207,11 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
     doc.text('TALÓN PARA LA MUNICIPALIDAD', pageWidth / 2 + 15, talonY + 5);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.text(`Cedulón #: ${nroCedulon}`, pageWidth / 2 + 15, talonY + 12);
-    doc.text(`Nombre: ${cabecera?.nombre}`, pageWidth / 2 + 15, talonY + 19);
-    doc.text(`CUIT: ${cabecera?.cuit}`, pageWidth / 2 + 15, talonY + 26);
-    doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, pageWidth / 2 + 15, talonY + 33);
-    doc.text(`Monto: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, pageWidth / 2 + 15, talonY + 40);
+    doc.text(`Cedulón #: ${nroCedulon}`, pageWidth / 2 + 15, talonY + 10);
+    doc.text(`Nombre: ${cabecera?.nombre}`, pageWidth / 2 + 15, talonY + 15);
+    doc.text(`CUIT: ${cabecera?.cuit}`, pageWidth / 2 + 15, talonY + 20);
+    doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, pageWidth / 2 + 15, talonY + 25);
+    doc.text(`Monto: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, pageWidth / 2 + 15, talonY + 30);
 
     doc.save(`Cedulon_${nroCedulon}.pdf`);
   };
@@ -259,4 +275,4 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
   );
 }
 
-export default Cedulon; 
+export default Cedulon;

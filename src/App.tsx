@@ -315,7 +315,7 @@ function App() {
               }}
               color="primary"
             >
-              <VisibilityIcon />
+              <AccountBalanceIcon />
             </IconButton>
             <IconButton
               onClick={() => {
@@ -326,7 +326,7 @@ function App() {
               }}
               color="info"
             >
-              <AccountBalanceIcon />
+              <VisibilityIcon />
             </IconButton>
             <IconButton
               onClick={() => {

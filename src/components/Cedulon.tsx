@@ -20,6 +20,8 @@ interface CabeceraCedulon {
   vencimiento: string;
   montoPagar: number;
   cuit: string;
+  legajo: string;
+  domicilio: string;
 }
 
 interface DetalleCedulon {
@@ -43,7 +45,7 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
       try {
         setLoading(true);
         const [cabResponse, detResponse] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_API_CEDULONES}Credito/getCabeceraPrintCedulonCredito?nroCedulon=${nroCedulon}`),
+          axios.get(`${import.meta.env.VITE_API_CEDULONES}Credito/getCabeceraPrintCedCredito?nroCedulon=${nroCedulon}`),
           axios.get(`${import.meta.env.VITE_API_CEDULONES}Credito/getDetallePrintCedulonCredito?nroCedulon=${nroCedulon}`)
         ]);
 
@@ -136,8 +138,8 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
       doc.text(`CUIT: ${cabecera?.cuit}`, 15, 55);
       doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, 15, 60);
       doc.text(`Monto a Pagar: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, 15, 65);
-      doc.text(`Domicilio: ----`, 15, 70);
-      doc.text(`Legajo: ----`, 15, 75);
+      doc.text(`Domicilio: ${cabecera?.domicilio}`, 15, 70);
+      doc.text(`Legajo: ${cabecera?.legajo}`, 15, 75);
     };
 
     // Generar encabezado

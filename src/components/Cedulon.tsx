@@ -187,21 +187,23 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
     doc.text('TALÓN PARA EL CONTRIBUYENTE', 15, talonY + 5);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.text(`Cedulón #: ${nroCedulon}`, 15, talonY + 10);
-    doc.text(`Nombre: ${cabecera?.nombre}`, 15, talonY + 15);
-    doc.text(`CUIT: ${cabecera?.cuit}`, 15, talonY + 20);
-    doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, 15, talonY + 25);
-    doc.text(`Monto: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, 15, talonY + 30);
+    doc.text(`Nombre: ${cabecera?.nombre}`, 15, talonY + 10);
+    doc.text(`CUIT: ${cabecera?.cuit}`, 15, talonY + 15);
+    doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, 15, talonY + 20);
+    doc.text(`Monto: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, 15, talonY + 25);
 
-    // Agregar código de barras debajo del monto
+    // Agregar código de barras más cerca del monto
     doc.addImage(
       canvas.toDataURL(),
       'PNG',
       15,
-      talonY + 35,
+      talonY + 28,
       barcodeWidth,
       barcodeHeight
     );
+
+    // Cedulón # centrado debajo del código de barras
+    doc.text(`${nroCedulon}`, 15 + barcodeWidth / 2, talonY + 55, { align: 'center' });
 
     // Talón para la municipalidad
     doc.setFont('helvetica', 'bold');

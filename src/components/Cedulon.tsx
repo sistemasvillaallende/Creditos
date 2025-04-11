@@ -4,7 +4,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typogra
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import JsBarcode from 'jsbarcode';
-import LogoPablo from '../assets/logos-cedulon.png';
+import LogoPablo from '../assets/logo-secretaria.png';
 
 interface CedulonProps {
   open: boolean;
@@ -22,6 +22,8 @@ interface CabeceraCedulon {
   cuit: string;
   legajo: string;
   domicilio: string;
+  cantidadCuotas: number;
+  presupuesto: string;
 }
 
 interface DetalleCedulon {
@@ -97,11 +99,11 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
     const generarEncabezado = () => {
       // Logo y código de barras
       const logoWidth = 80;
-      const logoHeight = 12;
+      const logoHeight = 19;
       doc.addImage(LogoPablo, 'PNG', 15, 10, logoWidth, logoHeight);
 
       // Generar código de barras
-      JsBarcode(canvas, nroCedulon.toString(), {
+      JsBarcode(canvas, `C0${nroCedulon.toString()}`, {
         format: "CODE128",
         width: 1.5,
         height: 40,
@@ -135,11 +137,13 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
       doc.text('Datos del Contribuyente:', 15, 45);
       doc.setFontSize(9);
       doc.text(`Nombre: ${cabecera?.nombre}`, 15, 50);
-      doc.text(`CUIT: ${cabecera?.cuit}`, 15, 55);
-      doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, 15, 60);
-      doc.text(`Monto a Pagar: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, 15, 65);
-      doc.text(`Domicilio: ${cabecera?.domicilio}`, 15, 70);
-      doc.text(`Legajo: ${cabecera?.legajo}`, 15, 75);
+      doc.text(`CUIT: ${cabecera?.cuit}`, 15, 54);
+      doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, 15, 58);
+      doc.text(`Monto a Pagar: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, 15, 62);
+      doc.text(`Domicilio: ${cabecera?.domicilio}`, 15, 66);
+      doc.text(`Legajo: ${cabecera?.legajo}`, 15, 70);
+      doc.text(`Cantidad de Cuotas: ${cabecera?.cantidadCuotas}`, 15, 74);
+      doc.text(`Presupuesto: $${Number(cabecera?.presupuesto).toLocaleString('es-AR')}`, 15, 78);
     };
 
     // Generar encabezado
@@ -153,7 +157,7 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
     // Tabla de detalles más compacta
     autoTable(doc, {
       startY: 90,
-      head: [['Período', 'Concepto', 'Monto Original', 'Recargo', 'Total']],
+      head: [['Cuotas', 'Concepto', 'Monto Original', 'Recargo', 'Total']],
       body: detalles.map(detalle => [
         detalle.periodo,
         detalle.concepto,
@@ -181,29 +185,31 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
     // Línea divisoria vertical
     doc.line(pageWidth / 2, talonY, pageWidth / 2, talonY + 50);
 
-    // Talón para el contribuyente
+    // TALÓN PARA EL CONTRIBUYENTE (con menor interlineado)
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
     doc.text('TALÓN PARA EL CONTRIBUYENTE', 15, talonY + 5);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.text(`Nombre: ${cabecera?.nombre}`, 15, talonY + 10);
-    doc.text(`CUIT: ${cabecera?.cuit}`, 15, talonY + 15);
-    doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, 15, talonY + 20);
-    doc.text(`Monto: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, 15, talonY + 25);
-
-    // Agregar código de barras más cerca del monto
+    doc.text('Programa Mi Casa Mi Espacio', 15, talonY + 8);
+    doc.text(`Nombre: ${cabecera?.nombre}`, 15, talonY + 12);
+    doc.text(`CUIT: ${cabecera?.cuit}`, 15, talonY + 16);
+    doc.text(
+      `Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`,
+      15,
+      talonY + 20
+    );
+    doc.text(`Monto: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, 15, talonY + 24);
+    doc.text(`Legajo: ${cabecera?.legajo}`, 15, talonY + 28);
     doc.addImage(
       canvas.toDataURL(),
       'PNG',
       15,
-      talonY + 28,
+      talonY + 29,
       barcodeWidth,
       barcodeHeight
     );
-
-    // Cedulón # centrado debajo del código de barras
-    doc.text(`${nroCedulon}`, 15 + barcodeWidth / 2, talonY + 55, { align: 'center' });
+    doc.text(`C0${nroCedulon}`, 15 + barcodeWidth / 2, talonY + 53, { align: 'center' });
 
     // Talón para la municipalidad
     doc.setFont('helvetica', 'bold');
@@ -211,11 +217,17 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
     doc.text('TALÓN PARA LA MUNICIPALIDAD', pageWidth / 2 + 15, talonY + 5);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.text(`Cedulón #: ${nroCedulon}`, pageWidth / 2 + 15, talonY + 10);
-    doc.text(`Nombre: ${cabecera?.nombre}`, pageWidth / 2 + 15, talonY + 15);
-    doc.text(`CUIT: ${cabecera?.cuit}`, pageWidth / 2 + 15, talonY + 20);
-    doc.text(`Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`, pageWidth / 2 + 15, talonY + 25);
-    doc.text(`Monto: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, pageWidth / 2 + 15, talonY + 30);
+    doc.text('Programa Mi Casa Mi Espacio', pageWidth / 2 + 15, talonY + 9);
+    doc.text(`Cedulón #: ${nroCedulon}`, pageWidth / 2 + 15, talonY + 14);
+    doc.text(`Nombre: ${cabecera?.nombre}`, pageWidth / 2 + 15, talonY + 19);
+    doc.text(`CUIT: ${cabecera?.cuit}`, pageWidth / 2 + 15, talonY + 24);
+    doc.text(
+      `Vencimiento: ${cabecera?.vencimiento ? new Date(cabecera.vencimiento).toLocaleDateString() : ''}`,
+      pageWidth / 2 + 15,
+      talonY + 29
+    );
+    doc.text(`Monto: $${cabecera?.montoPagar?.toLocaleString('es-AR') || 0}`, pageWidth / 2 + 15, talonY + 34);
+    doc.text(`Legajo: ${cabecera?.legajo}`, pageWidth / 2 + 15, talonY + 39);
 
     doc.save(`Cedulon_${nroCedulon}.pdf`);
   };

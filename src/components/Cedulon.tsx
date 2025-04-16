@@ -104,7 +104,7 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
 
       // Generar código de barras
       JsBarcode(canvas, `C0${nroCedulon.toString()}`, {
-        format: "CODE128",
+        format: "CODE39",
         width: 1.5,
         height: 40,
         displayValue: false

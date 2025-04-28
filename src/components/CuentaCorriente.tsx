@@ -61,7 +61,13 @@ export default function CuentaCorriente({ open, onClose, idCredito, legajo, cuit
         const response = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}CM_Ctasctes/getListCtasCtes?id_credito_materiales=${idCredito}`
         );
-        setCuentas(response.data);
+
+        // Ordenar los datos por período antes de asignarlos al estado
+        const cuentasOrdenadas = response.data.sort((a: CtaCte, b: CtaCte) => {
+          return a.periodo.localeCompare(b.periodo);
+        });
+
+        setCuentas(cuentasOrdenadas);
 
         // Calcular totales
         const totales = response.data.reduce((acc: { debe: number; haber: number; montoOriginal: number }, cuenta: CtaCte) => ({

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import axios from 'axios';
-import { Container, Typography, IconButton, Box, Button, TextField, InputAdornment, Grid, MenuItem } from '@mui/material';
+import { Container, Typography, IconButton, Box, Button, TextField, InputAdornment, Grid, MenuItem, Tooltip } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -302,51 +302,59 @@ function App() {
       renderCell: (params) => {
         return (
           <>
-            <IconButton
-              onClick={() => {
-                setSelectedCredito(params.row.id_credito_materiales);
-                setSelectedLegajo(params.row.legajo);
-                setSelectedCuit(params.row.cuit_solicitante);
-                setOpenDetalleDeuda(true);
-                setSelectedGarantes(params.row.garantes);
-                setSelectedVencimiento(params.row.proximo_vencimiento);
-                setSelectedSaldoAdeudado(params.row.saldo_adeudado);
-                setSelectedValorCuotaUva(params.row.valor_cuota_uva);
-              }}
-              color="primary"
-            >
-              <AccountBalanceIcon />
-            </IconButton>
-            <IconButton
-              onClick={() => {
-                setSelectedCredito(params.row.id_credito_materiales);
-                setSelectedLegajo(params.row.legajo);
-                setSelectedCuit(params.row.cuit_solicitante);
-                setOpenCuentaCorriente(true);
-              }}
-              color="info"
-            >
-              <VisibilityIcon />
-            </IconButton>
-            <IconButton
-              onClick={() => {
-                setSelectedCredito(params.row.id_credito_materiales);
-                setSelectedLegajo(params.row.legajo);
-                setOpenEditarCredito(true);
-              }}
-              color="warning"
-            >
-              <EditIcon />
-            </IconButton>
-            <IconButton
-              onClick={() => params.row.baja ?
-                handleAltaBaja(params.row.id_credito_materiales) :
-                handleDelete(params.row.legajo, params.row.id_credito_materiales)
-              }
-              color={params.row.baja ? "success" : "error"}
-            >
-              {params.row.baja ? <UploadIcon /> : <DeleteIcon />}
-            </IconButton>
+            <Tooltip title="Ver detalles de deuda" arrow>
+              <IconButton
+                onClick={() => {
+                  setSelectedCredito(params.row.id_credito_materiales);
+                  setSelectedLegajo(params.row.legajo);
+                  setSelectedCuit(params.row.cuit_solicitante);
+                  setOpenDetalleDeuda(true);
+                  setSelectedGarantes(params.row.garantes);
+                  setSelectedVencimiento(params.row.proximo_vencimiento);
+                  setSelectedSaldoAdeudado(params.row.saldo_adeudado);
+                  setSelectedValorCuotaUva(params.row.valor_cuota_uva);
+                }}
+                color="primary"
+              >
+                <AccountBalanceIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Ver cuenta corriente" arrow>
+              <IconButton
+                onClick={() => {
+                  setSelectedCredito(params.row.id_credito_materiales);
+                  setSelectedLegajo(params.row.legajo);
+                  setSelectedCuit(params.row.cuit_solicitante);
+                  setOpenCuentaCorriente(true);
+                }}
+                color="info"
+              >
+                <VisibilityIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Editar crédito" arrow>
+              <IconButton
+                onClick={() => {
+                  setSelectedCredito(params.row.id_credito_materiales);
+                  setSelectedLegajo(params.row.legajo);
+                  setOpenEditarCredito(true);
+                }}
+                color="warning"
+              >
+                <EditIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={params.row.baja ? "Dar de alta" : "Dar de baja"} arrow>
+              <IconButton
+                onClick={() => params.row.baja ?
+                  handleAltaBaja(params.row.id_credito_materiales) :
+                  handleDelete(params.row.legajo, params.row.id_credito_materiales)
+                }
+                color={params.row.baja ? "success" : "error"}
+              >
+                {params.row.baja ? <UploadIcon /> : <DeleteIcon />}
+              </IconButton>
+            </Tooltip>
           </>
         );
       },
@@ -364,13 +372,15 @@ function App() {
           <Typography variant="h4" component="h1">
             Listado de Créditos
           </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => setOpenNuevoCredito(true)}
-          >
-            Nuevo Crédito
-          </Button>
+          <Tooltip title="Crear un nuevo crédito" arrow>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => setOpenNuevoCredito(true)}
+            >
+              Nuevo Crédito
+            </Button>
+          </Tooltip>
         </Box>
 
         <Box mb={2}>

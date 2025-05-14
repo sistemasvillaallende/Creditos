@@ -221,6 +221,14 @@ function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proxim
     }
   }, [idCredito, open]);
 
+  const formatVencimiento = (fech: string) => {
+    const date = new Date(fech);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
   return (
     <>
       <Dialog
@@ -238,7 +246,7 @@ function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proxim
               <Typography><strong>Garantes:</strong> {garantes}</Typography>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Typography><strong>Próximo Vencimiento:</strong> {proximoVencimiento}</Typography>
+              <Typography><strong>Próximo Vencimiento:</strong> {formatVencimiento(proximoVencimiento)}</Typography>
               <Typography><strong>Saldo Adeudado:</strong> ${saldoAdeudado.toLocaleString('es-AR')}</Typography>
               <Typography><strong>Valor Cuota UVA:</strong> ${valorCuotaUva.toLocaleString('es-AR')}</Typography>
             </Grid>

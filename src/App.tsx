@@ -13,6 +13,8 @@ import MainLayout from './layouts/MainLayout';
 import SearchIcon from '@mui/icons-material/Search';
 import UploadIcon from '@mui/icons-material/Upload';
 import { useAuth } from './contexts/AuthContext';
+import DownloadIcon from '@mui/icons-material/Download';
+import * as XLSX from 'xlsx';
 import AccessDenied from './components/AccessDenied';
 import { createAuditoriaData } from './utils/auditoria';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
@@ -251,6 +253,57 @@ function App() {
     }
   };
 
+  const handleExportToExcel = () => {
+    if (creditos.length === 0) {
+      Swal.fire('Nada que exportar', 'La tabla está vacía o no hay datos filtrados.', 'info');
+      return;
+    }
+
+    // Definir los encabezados y el orden de las columnas explícitamente
+    const headers = [
+      'ID', 'Legajo', 'Nombre', 'Domicilio', 'Fecha Alta', 'CUIT',
+      'Presupuesto ($)', 'Presupuesto UVA ($)', 'Cuotas', 'Estado Crédito',
+      'Importe Adeudado ($)', 'Importe Pagado ($)', 'Importe Vencido ($)',
+      'Cuotas Pagadas', 'Cuotas Vencidas', 'Fecha Último Pago'
+    ];
+
+    const dataToExport = creditos.map(credito => {
+      const rowData: { [key: string]: any } = {};
+      rowData[headers[0]] = credito.id_credito_materiales;
+      rowData[headers[1]] = credito.legajo;
+      rowData[headers[2]] = credito.nombre || 'Sin nombre';
+      rowData[headers[3]] = credito.domicilio;
+      rowData[headers[4]] = credito.fecha_alta ? new Date(credito.fecha_alta).toLocaleDateString('es-AR') : '';
+      rowData[headers[5]] = credito.cuit_solicitante;
+      rowData[headers[6]] = credito.presupuesto; // Exportar como número
+      rowData[headers[7]] = credito.presupuesto_uva; // Exportar como número
+      rowData[headers[8]] = credito.cant_cuotas;
+      rowData[headers[9]] = credito.baja ? 'BAJA' : 'VIGENTE';
+      rowData[headers[10]] = credito.imp_adeudado ?? null; // null para celdas vacías, Excel lo maneja bien
+      rowData[headers[11]] = credito.imp_pagado ?? null;
+      rowData[headers[12]] = credito.imp_vencido ?? null;
+      rowData[headers[13]] = credito.cuotas_pagadas ?? null;
+      rowData[headers[14]] = credito.cuotas_vencidas ?? null;
+      rowData[headers[15]] = credito.fecha_ultimo_pago ? new Date(credito.fecha_ultimo_pago).toLocaleDateString('es-AR') : 'N/P';
+      return headers.map(header => rowData[header]); // Devuelve un array de valores en el orden de los headers
+    });
+
+    // Crear la hoja de cálculo usando aoa_to_sheet para mantener el orden y manejar celdas vacías
+    const worksheetData = [headers, ...dataToExport];
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+
+    // Ajustar anchos de columnas (opcional pero recomendado)
+    const colWidths = headers.map((header, i) => ({
+      wch: Math.max(header.length, ...worksheetData.slice(1).map(dataRow => (dataRow[i]?.toString() ?? '').length)) + 2
+    }));
+    worksheet['!cols'] = colWidths;
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Creditos');
+
+    XLSX.writeFile(workbook, `ListadoCreditos_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
   const columns: GridColDef[] = [
     { field: 'id_credito_materiales', headerName: 'ID', width: 50 },
     {
@@ -453,15 +506,27 @@ function App() {
           <Typography variant="h4" component="h1">
             Listado de Créditos
           </Typography>
-          <Tooltip title="Crear un nuevo crédito" arrow>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => setOpenNuevoCredito(true)}
-            >
-              Nuevo Crédito
-            </Button>
-          </Tooltip>
+          <Box>
+            <Tooltip title="Descargar listado en Excel" arrow sx={{ mr: 1 }}>
+              <Button
+                variant="outlined"
+                color="success"
+                onClick={handleExportToExcel}
+                startIcon={<DownloadIcon />}
+              >
+                Exportar Excel
+              </Button>
+            </Tooltip>
+            <Tooltip title="Crear un nuevo crédito" arrow>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => setOpenNuevoCredito(true)}
+              >
+                Nuevo Crédito
+              </Button>
+            </Tooltip>
+          </Box>
         </Box>
 
         <Box mb={2}>

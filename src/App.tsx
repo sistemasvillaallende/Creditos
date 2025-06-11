@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import axios from 'axios';
-import { Container, Typography, IconButton, Box, Button, TextField, InputAdornment, Grid, MenuItem, Tooltip } from '@mui/material';
+import { Container, Typography, IconButton, Box, Button, TextField, InputAdornment, Grid, Tooltip, FormControlLabel, Switch } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -17,11 +17,45 @@ import AccessDenied from './components/AccessDenied';
 import { createAuditoriaData } from './utils/auditoria';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import CuentaCorriente from './components/CuentaCorriente';
-import { Credito } from './types/Credito';
+
+export type Credito = {
+  id_credito_materiales: number;
+  legajo: number;
+  domicilio: string;
+  fecha_alta: string;
+  baja: boolean;
+  fecha_baja: string;
+  cuit_solicitante: string;
+  garantes: string;
+  presupuesto: number;
+  presupuesto_uva: number;
+  cant_cuotas: number;
+  valor_cuota_uva: number;
+  id_uva: number;
+  id_estado: number;
+  per_ultimo: string;
+  con_deuda: number;
+  saldo_adeudado: number;
+  proximo_vencimiento: string;
+  nombre: string; // Made non-optional as it's defaulted
+}
+
+export type ResumenImporte = {
+  legajo: number;
+  imp_pagado: number;
+  imp_adeudado: number;
+  imp_vencido: number;
+  cuotas_vencidas: number;
+  cuotas_pagadas: number;
+  fecha_ultimo_pago: string | null;
+}
+
+export type CreditoConResumen = Credito & Partial<ResumenImporte>;
 
 function App() {
   const { isAuthenticated, user } = useAuth();
-  const [creditos, setCreditos] = useState<Credito[]>([]);
+  const [creditos, setCreditos] = useState<CreditoConResumen[]>([]); // Holds filtered data for display
+  const [allCreditos, setAllCreditos] = useState<CreditoConResumen[]>([]); // Holds all fetched and merged data
   const [loading, setLoading] = useState(true);
   const [selectedCredito, setSelectedCredito] = useState<number | null>(null);
   const [openDetalleDeuda, setOpenDetalleDeuda] = useState(false);
@@ -34,94 +68,101 @@ function App() {
   const [selectedCuit, setSelectedCuit] = useState<string>('');
   const [openEditarCredito, setOpenEditarCredito] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [searchType, setSearchType] = useState<'legajo' | 'nombre'>('legajo');
   const [openCuentaCorriente, setOpenCuentaCorriente] = useState(false);
+  const [filterConDeudaImp, setFilterConDeudaImp] = useState<boolean>(false);
 
-  const fetchAllCreditos = async () => {
+  const fetchAllData = async () => {
+    setLoading(true);
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/GetAllCreditos`
-      );
+      const [creditosResponse, resumenesResponse] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/GetAllCreditos`),
+        axios.get(`${import.meta.env.VITE_API_BASE_URL}CM_Ctasctes/resumenImportes`)
+      ]);
 
-      if (Array.isArray(response.data)) {
-        const creditosFormateados = response.data.map((credito: Credito) => ({
+      let fetchedCreditos: Credito[] = [];
+      if (Array.isArray(creditosResponse.data)) {
+        fetchedCreditos = creditosResponse.data.map((credito: any) => ({
           ...credito,
           presupuesto: Number(credito.presupuesto),
           presupuesto_uva: Number(credito.presupuesto_uva),
           nombre: credito.nombre || 'Sin nombre'
         }));
-        setCreditos(creditosFormateados);
       }
-    } catch (error) {
-      console.error('Error al cargar los créditos:', error);
-      setCreditos([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const fetchCreditosBySearch = async (searchTerm: string, searchType: 'legajo' | 'nombre') => {
-    try {
-      console.log('Buscando con parámetros:', {
-        buscarPor: searchType,
-        strParametro: searchTerm.trim(),
-        pagina: 1,
-        registros_por_pagina: 10
+      let resumenesData: ResumenImporte[] = [];
+      if (Array.isArray(resumenesResponse.data)) {
+        resumenesData = resumenesResponse.data.map((r: any) => ({
+          legajo: Number(r.legajo),
+          imp_pagado: Number(r.imp_pagado),
+          imp_adeudado: Number(r.imp_adeudado),
+          imp_vencido: Number(r.imp_vencido),
+          cuotas_vencidas: Number(r.cuotas_vencidas),
+          cuotas_pagadas: Number(r.cuotas_pagadas),
+          fecha_ultimo_pago: r.fecha_ultimo_pago || null,
+        }));
+      }
+
+      const resumenesMap = new Map<number, ResumenImporte>();
+      resumenesData.forEach(resumen => resumenesMap.set(resumen.legajo, resumen));
+
+      const mergedCreditos: CreditoConResumen[] = fetchedCreditos.map(credito => {
+        const resumen = resumenesMap.get(credito.legajo);
+        return {
+          ...credito,
+          ...(resumen ? {
+            imp_pagado: resumen.imp_pagado,
+            imp_adeudado: resumen.imp_adeudado,
+            imp_vencido: resumen.imp_vencido,
+            cuotas_vencidas: resumen.cuotas_vencidas,
+            cuotas_pagadas: resumen.cuotas_pagadas,
+            fecha_ultimo_pago: resumen.fecha_ultimo_pago,
+          } : {}),
+        };
       });
 
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/GetCreditoMPaginado`,
-        {
-          params: {
-            buscarPor: searchType,
-            strParametro: searchTerm.trim().toLowerCase(),
-            pagina: 1,
-            registros_por_pagina: 10
-          }
-        }
-      );
-
-      if (response.status === 204) {
-        console.log('No se encontraron resultados');
-        setCreditos([]);
-        return;
-      }
-
-      if (response.data && response.data.resultado) {
-        const creditosFormateados = response.data.resultado.map((credito: Credito) => ({
-          ...credito,
-          presupuesto: Number(credito.presupuesto),
-          presupuesto_uva: Number(credito.presupuesto_uva),
-          nombre: credito.nombre || 'Sin nombre'
-        }));
-        setCreditos(creditosFormateados);
-      } else {
-        console.log('Respuesta inesperada:', response.data);
-        setCreditos([]);
-      }
+      setAllCreditos(mergedCreditos);
     } catch (error) {
-      console.error('Error al cargar los créditos:', error);
-      setCreditos([]);
+      console.error('Error al cargar los datos:', error);
+      setAllCreditos([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setSearchTerm(value);
-
-    if (value.trim()) {
-      fetchCreditosBySearch(value, searchType);
-    } else {
-      fetchAllCreditos();
-    }
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
   };
 
   useEffect(() => {
-    fetchAllCreditos();
+    fetchAllData();
   }, []);
 
+  useEffect(() => {
+    let filteredData = [...allCreditos];
+
+    if (searchTerm.trim()) {
+      const lowerSearchTerm = searchTerm.trim().toLowerCase();
+      filteredData = filteredData.filter(credito => {
+        const fieldsToSearch = [
+          credito.id_credito_materiales?.toString(),
+          credito.legajo?.toString(),
+          credito.nombre,
+          credito.domicilio,
+          credito.cuit_solicitante,
+          credito.garantes,
+        ];
+        return fieldsToSearch.some(field => field?.toLowerCase().includes(lowerSearchTerm));
+      });
+    }
+
+    if (filterConDeudaImp) {
+      filteredData = filteredData.filter(
+        credito => typeof credito.imp_vencido === 'number' && credito.imp_vencido > 0
+      );
+    }
+
+    setCreditos(filteredData);
+  }, [searchTerm, filterConDeudaImp, allCreditos]);
 
   const handleDelete = async (legajo: number, id_credito_materiales: number) => {
     const { value: observaciones } = await Swal.fire({
@@ -161,7 +202,7 @@ function App() {
           'success'
         );
 
-        fetchAllCreditos(); // Actualizar la tabla
+        fetchAllData(); // Actualizar la tabla
       } catch (error) {
         console.error('Error al eliminar el crédito:', error);
         Swal.fire(
@@ -202,7 +243,7 @@ function App() {
         );
 
         Swal.fire('Éxito', 'El crédito ha sido dado de alta correctamente', 'success');
-        fetchAllCreditos();
+        fetchAllData();
       } catch (error) {
         console.error('Error al dar de alta el crédito:', error);
         Swal.fire('Error', 'Hubo un error al dar de alta el crédito', 'error');
@@ -275,18 +316,62 @@ function App() {
       }
     },
     {
-      field: 'deuda',
-      headerName: 'DEUDA',
+      field: 'imp_adeudado',
+      headerName: 'Adeudado',
+      width: 150,
+      align: 'left',
+      headerAlign: 'left',
+      renderCell: (params) => {
+        return params.row.imp_adeudado != null ? `$${Number(params.row.imp_adeudado).toLocaleString('es-AR')}` : 'N/A';
+      }
+    },
+    {
+      field: 'imp_pagado',
+      headerName: 'Pagado',
+      width: 150,
+      align: 'left',
+      headerAlign: 'left',
+      renderCell: (params) => {
+        return params.row.imp_pagado != null ? `$${Number(params.row.imp_pagado).toLocaleString('es-AR')}` : 'N/A';
+      }
+    },
+    {
+      field: 'imp_vencido',
+      headerName: 'Vencido',
+      width: 150,
+      align: 'left',
+      headerAlign: 'left',
+      renderCell: (params) => {
+        return params.row.imp_vencido != null ? `$${Number(params.row.imp_vencido).toLocaleString('es-AR')}` : 'N/A';
+      }
+    },
+    {
+      field: 'cuotas_pagadas',
+      headerName: 'Pagadas',
+      width: 100,
+      renderCell: (params) => {
+        // Check if the property exists and is not null/undefined
+        return params.row.cuotas_pagadas != null ? params.row.cuotas_pagadas : 'N/A';
+      }
+    },
+    {
+      field: 'cuotas_vencidas',
+      headerName: 'Vencidas',
+      width: 100,
+      renderCell: (params) => {
+        // Check if the property exists and is not null/undefined
+        return params.row.cuotas_vencidas != null ? params.row.cuotas_vencidas : 'N/A';
+      }
+    },
+    {
+      field: 'fecha_ultimo_pago',
+      headerName: 'Último Pago',
       width: 120,
       renderCell: (params) => {
-        return (
-          <span style={{
-            color: params.row.con_deuda == 0 ? '#2e7d32' : '#d32f2f',
-            fontWeight: 'bold'
-          }}>
-            {params.row.con_deuda == 0 ? 'SIN DEUDA' : 'CON DEUDA'}
-          </span>
-        );
+        if (params.row.fecha_ultimo_pago) {
+          return new Date(params.row.fecha_ultimo_pago).toLocaleDateString('es-AR');
+        }
+        return 'N/P';
       }
     },
     {
@@ -294,6 +379,7 @@ function App() {
       headerName: 'Acciones',
       width: 200,
       renderCell: (params) => {
+        const currentCreditoRow = params.row as CreditoConResumen;
         return (
           <>
             <Tooltip title="Ver detalles de deuda" arrow>
@@ -305,8 +391,8 @@ function App() {
                   setOpenDetalleDeuda(true);
                   setSelectedGarantes(params.row.garantes);
                   setSelectedVencimiento(params.row.proximo_vencimiento);
-                  setSelectedSaldoAdeudado(params.row.saldo_adeudado);
-                  setSelectedValorCuotaUva(params.row.valor_cuota_uva);
+                  setSelectedSaldoAdeudado(currentCreditoRow.imp_adeudado ?? currentCreditoRow.saldo_adeudado ?? 0);
+                  setSelectedValorCuotaUva(currentCreditoRow.valor_cuota_uva);
                 }}
                 color="primary"
               >
@@ -380,26 +466,13 @@ function App() {
 
         <Box mb={2}>
           <Grid container spacing={2}>
-            <Grid item xs={12} md={3}>
-              <TextField
-                select
-                fullWidth
-                value={searchType}
-                onChange={(e) => setSearchType(e.target.value as 'legajo' | 'nombre')}
-                variant="outlined"
-                label="Buscar por"
-              >
-                <MenuItem value="legajo">Legajo</MenuItem>
-                <MenuItem value="nombre">Nombre</MenuItem>
-              </TextField>
-            </Grid>
-            <Grid item xs={12} md={9}>
+            <Grid item xs={12} sm={8} md={9}>
               <TextField
                 fullWidth
                 variant="outlined"
-                label={`Buscar por ${searchType}`}
+                label="Buscar en créditos..."
                 value={searchTerm}
-                onChange={handleSearch}
+                onChange={handleSearchChange}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -407,7 +480,18 @@ function App() {
                     </InputAdornment>
                   ),
                 }}
-                placeholder={`Ingrese ${searchType === 'legajo' ? 'el número de legajo' : 'el nombre'}`}
+                placeholder="Ingrese término de búsqueda (legajo, nombre, CUIT, etc.)"
+              />
+            </Grid>
+            <Grid item xs={12} sm={4} md={3}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={filterConDeudaImp}
+                    onChange={(e) => setFilterConDeudaImp(e.target.checked)}
+                  />
+                }
+                label="Vencido"
               />
             </Grid>
           </Grid>
@@ -429,18 +513,18 @@ function App() {
           open={openDetalleDeuda}
           onClose={() => setOpenDetalleDeuda(false)}
           idCredito={selectedCredito || 0}
-          legajo={selectedLegajo}
-          cuit={selectedCuit}
-          garantes={selectedGarantes}
-          proximoVencimiento={selectedVencimiento}
-          saldoAdeudado={selectedSaldoAdeudado}
-          valorCuotaUva={selectedValorCuotaUva}
+          legajo={selectedLegajo || 0}
+          cuit={selectedCuit || ''}
+          garantes={selectedGarantes || ''}
+          proximoVencimiento={selectedVencimiento || ''}
+          saldoAdeudado={selectedSaldoAdeudado || 0}
+          valorCuotaUva={selectedValorCuotaUva || 0}
         />
         <NuevoCredito
           open={openNuevoCredito}
           onClose={() => setOpenNuevoCredito(false)}
           onCreditoCreado={() => {
-            fetchAllCreditos();
+            fetchAllData();
           }}
         />
         <EditarCredito
@@ -448,15 +532,15 @@ function App() {
           onClose={() => setOpenEditarCredito(false)}
           idCredito={selectedCredito || 0}
           onCreditoEditado={() => {
-            fetchAllCreditos();
+            fetchAllData();
           }}
         />
         <CuentaCorriente
           open={openCuentaCorriente}
           onClose={() => setOpenCuentaCorriente(false)}
           idCredito={selectedCredito || 0}
-          legajo={selectedLegajo}
-          cuit={selectedCuit}
+          legajo={selectedLegajo || 0}
+          cuit={selectedCuit || ''}
           nombre={creditos.find(c => c.id_credito_materiales === selectedCredito)?.nombre || ''}
         />
       </Container>

@@ -54,6 +54,38 @@ export type ResumenImporte = {
 
 export type CreditoConResumen = Credito & Partial<ResumenImporte>;
 
+/**
+ * Parses a date string that might be in "DD/MM/YYYY" format or an ISO format.
+ * @param dateString The date string to parse.
+ * @returns A Date object if parsing is successful, otherwise null.
+ */
+const parsePossibleDateString = (dateString: string | null | undefined): Date | null => {
+  if (!dateString) return null;
+
+  // Try parsing "DD/MM/YYYY"
+  const parts = dateString.split('/');
+  if (parts.length === 3) {
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10); // Month is 1-indexed from string
+    const year = parseInt(parts[2], 10);
+    // Basic validation for day, month, year ranges
+    if (!isNaN(day) && !isNaN(month) && !isNaN(year) && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      const date = new Date(year, month - 1, day); // Month for Date constructor is 0-indexed
+      // Check if the constructed date is valid and matches the input (e.g. not Feb 30th)
+      if (date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
+        return date;
+      }
+    }
+  }
+  // If not "DD/MM/YYYY" or if parsing failed, try standard Date constructor (for ISO strings etc.)
+  const date = new Date(dateString);
+  if (!isNaN(date.getTime())) {
+    return date;
+  }
+
+  return null;
+};
+
 function App() {
   const { isAuthenticated, user } = useAuth();
   const [creditos, setCreditos] = useState<CreditoConResumen[]>([]); // Holds filtered data for display
@@ -273,7 +305,8 @@ function App() {
       rowData[headers[1]] = credito.legajo;
       rowData[headers[2]] = credito.nombre || 'Sin nombre';
       rowData[headers[3]] = credito.domicilio;
-      rowData[headers[4]] = credito.fecha_alta ? new Date(credito.fecha_alta).toLocaleDateString('es-AR') : '';
+      const parsedFechaAlta = parsePossibleDateString(credito.fecha_alta);
+      rowData[headers[4]] = parsedFechaAlta ? parsedFechaAlta.toLocaleDateString('es-AR') : '';
       rowData[headers[5]] = credito.cuit_solicitante;
       rowData[headers[6]] = credito.presupuesto; // Exportar como número
       rowData[headers[7]] = credito.presupuesto_uva; // Exportar como número
@@ -284,7 +317,8 @@ function App() {
       rowData[headers[12]] = credito.imp_vencido ?? null;
       rowData[headers[13]] = credito.cuotas_pagadas ?? null;
       rowData[headers[14]] = credito.cuotas_vencidas ?? null;
-      rowData[headers[15]] = credito.fecha_ultimo_pago ? new Date(credito.fecha_ultimo_pago).toLocaleDateString('es-AR') : 'N/P';
+      const parsedFechaUltimoPago = parsePossibleDateString(credito.fecha_ultimo_pago);
+      rowData[headers[15]] = parsedFechaUltimoPago ? parsedFechaUltimoPago.toLocaleDateString('es-AR') : 'N/P';
       return headers.map(header => rowData[header]); // Devuelve un array de valores en el orden de los headers
     });
 
@@ -325,10 +359,8 @@ function App() {
       headerName: 'Fecha Alta',
       width: 100,
       renderCell: (params) => {
-        if (params.row.fecha_alta) {
-          return new Date(params.row.fecha_alta).toLocaleDateString('es-AR');
-        }
-        return '';
+        const date = parsePossibleDateString(params.row.fecha_alta);
+        return date ? date.toLocaleDateString('es-AR') : '';
       }
     },
     { field: 'cuit_solicitante', headerName: 'CUIT', width: 130 },
@@ -421,10 +453,8 @@ function App() {
       headerName: 'Último Pago',
       width: 120,
       renderCell: (params) => {
-        if (params.row.fecha_ultimo_pago) {
-          return new Date(params.row.fecha_ultimo_pago).toLocaleDateString('es-AR');
-        }
-        return 'N/P';
+        const date = parsePossibleDateString(params.row.fecha_ultimo_pago);
+        return date ? date.toLocaleDateString('es-AR') : 'N/P';
       }
     },
     {

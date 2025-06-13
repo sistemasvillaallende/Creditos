@@ -339,11 +339,10 @@ function App() {
   };
 
   const columns: GridColDef[] = [
-    { field: 'id_credito_materiales', headerName: 'ID', width: 50 },
     {
       field: 'legajo',
       headerName: 'Legajo',
-      width: 80
+      width: 60
     },
     {
       field: 'nombre',
@@ -356,18 +355,22 @@ function App() {
     { field: 'domicilio', headerName: 'Domicilio', width: 150 },
     {
       field: 'fecha_alta',
-      headerName: 'Fecha Alta',
-      width: 100,
+      headerName: 'Alta',
+      width: 90,
       renderCell: (params) => {
         const date = parsePossibleDateString(params.row.fecha_alta);
         return date ? date.toLocaleDateString('es-AR') : '';
       }
     },
-    { field: 'cuit_solicitante', headerName: 'CUIT', width: 130 },
+    {
+      field: 'cuit_solicitante',
+      headerName: 'CUIT',
+      width: 110
+    },
     {
       field: 'presupuesto',
       headerName: 'Presupuesto',
-      width: 130,
+      width: 120,
       align: 'left',
       headerAlign: 'left',
       renderCell: (params) => {
@@ -376,7 +379,7 @@ function App() {
     },
     {
       field: 'presupuesto_uva',
-      headerName: 'Presupuesto UVA (saldo inicial UVA)',
+      headerName: 'UVA (Presupuesto saldo inicial UVA)',
       width: 100,
       align: 'left',
       headerAlign: 'left',
@@ -384,18 +387,28 @@ function App() {
         return `$${Number(params.row.presupuesto_uva).toLocaleString('es-AR')}`;
       }
     },
-    { field: 'cant_cuotas', headerName: 'Cuotas', width: 100 },
+    {
+      field: 'cant_cuotas',
+      headerName: 'Cuotas',
+      width: 60,
+      renderCell(params) {
+        return `${params.row.cuotas_pagadas}/${params.row.cant_cuotas}`;
+      }
+    },
     {
       field: 'baja',
       headerName: 'Estado',
-      width: 120,
+      width: 70,
       renderCell: (params) => {
         return (
           <span style={{
             color: params.row.baja ? '#d32f2f' : '#2e7d32',
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            alignItems: 'center',
+            display: 'flex',
+            justifyContent: 'center',
           }}>
-            {params.row.baja ? 'BAJA' : 'VIGENTE'}
+            {params.row.baja ? '❌' : '✅'}
           </span>
         );
       }
@@ -403,7 +416,7 @@ function App() {
     {
       field: 'imp_adeudado',
       headerName: 'Adeudado',
-      width: 150,
+      width: 120,
       align: 'left',
       headerAlign: 'left',
       renderCell: (params) => {
@@ -411,50 +424,13 @@ function App() {
       }
     },
     {
-      field: 'imp_pagado',
-      headerName: 'Pagado',
-      width: 150,
-      align: 'left',
-      headerAlign: 'left',
-      renderCell: (params) => {
-        return params.row.imp_pagado != null ? `$${Number(params.row.imp_pagado).toLocaleString('es-AR')}` : 'N/A';
-      }
-    },
-    {
       field: 'imp_vencido',
       headerName: 'Vencido',
-      width: 150,
+      width: 110,
       align: 'left',
       headerAlign: 'left',
       renderCell: (params) => {
         return params.row.imp_vencido != null ? `$${Number(params.row.imp_vencido).toLocaleString('es-AR')}` : 'N/A';
-      }
-    },
-    {
-      field: 'cuotas_pagadas',
-      headerName: 'Pagadas',
-      width: 100,
-      renderCell: (params) => {
-        // Check if the property exists and is not null/undefined
-        return params.row.cuotas_pagadas != null ? params.row.cuotas_pagadas : 'N/A';
-      }
-    },
-    {
-      field: 'cuotas_vencidas',
-      headerName: 'Vencidas',
-      width: 100,
-      renderCell: (params) => {
-        // Check if the property exists and is not null/undefined
-        return params.row.cuotas_vencidas != null ? params.row.cuotas_vencidas : 'N/A';
-      }
-    },
-    {
-      field: 'fecha_ultimo_pago',
-      headerName: 'Último Pago',
-      width: 120,
-      renderCell: (params) => {
-        const date = parsePossibleDateString(params.row.fecha_ultimo_pago);
-        return date ? date.toLocaleDateString('es-AR') : 'N/P';
       }
     },
     {

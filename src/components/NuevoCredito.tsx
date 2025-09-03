@@ -8,7 +8,12 @@ import {
   DialogActions,
   Button,
   Typography,
-  Grid
+  Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText
 } from '@mui/material';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -21,6 +26,13 @@ interface BadecData {
   nombre_calle: string;
   nro_dom: number;
   cuit: string;
+}
+
+interface CategoriaDeuda {
+  cod_categoria: number;
+  des_categoria: string;
+  id_subrubro: number;
+  tipo_deuda: number;
 }
 
 interface NuevoCreditoProps {
@@ -41,12 +53,14 @@ const initialFormData = {
   seccion: '',
   manzana: '',
   parcela: '',
-  p_h: ''
+  p_h: '',
+  cod_categoria: ''
 };
 
 function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
   const { user } = useAuth();
   const [cuitOptions, setCuitOptions] = useState<BadecData[]>([]);
+  const [categorias, setCategorias] = useState<CategoriaDeuda[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -66,6 +80,17 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
       console.error('Error al buscar CUIT:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCategorias = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}CM_Cate_deuda/GetCategoriasDeuda`
+      );
+      setCategorias(response.data);
+    } catch (error) {
+      console.error('Error al cargar categorías:', error);
     }
   };
 
@@ -91,6 +116,7 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
     if (!formData.presupuesto) newErrors.presupuesto = 'El presupuesto es obligatorio';
     if (!formData.presupuesto_uva) newErrors.presupuesto_uva = 'El presupuesto UVA es obligatorio';
     if (!formData.cant_cuotas) newErrors.cant_cuotas = 'La cantidad de cuotas es obligatoria';
+    if (!formData.cod_categoria) newErrors.cod_categoria = 'La categoría es obligatoria';
     if (!formData.circunscripcion) newErrors.circunscripcion = 'La circunscripción es obligatoria';
     if (!formData.seccion) newErrors.seccion = 'La sección es obligatoria';
     if (!formData.manzana) newErrors.manzana = 'La manzana es obligatoria';
@@ -126,6 +152,7 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
             con_deuda: 0,
             saldo_adeudado: 0,
             proximo_vencimiento: new Date().toISOString(),
+            cod_categoria: parseInt(formData.cod_categoria),
             circunscripcion: parseInt(formData.circunscripcion),
             seccion: parseInt(formData.seccion),
             manzana: parseInt(formData.manzana),
@@ -177,6 +204,7 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
     };
 
     fetchValorUva();
+    fetchCategorias();
   }, []);
 
   useEffect(() => {
@@ -255,6 +283,28 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
           error={!!errors.garantes}
           helperText={errors.garantes}
         />
+        <FormControl
+          fullWidth
+          margin="normal"
+          error={!!errors.cod_categoria}
+        >
+          <InputLabel id="categoria-label">Categoría</InputLabel>
+          <Select
+            labelId="categoria-label"
+            value={formData.cod_categoria}
+            label="Categoría"
+            onChange={(e) => setFormData({ ...formData, cod_categoria: e.target.value })}
+          >
+            {categorias.map((categoria) => (
+              <MenuItem key={categoria.cod_categoria} value={categoria.cod_categoria.toString()}>
+                {categoria.des_categoria}
+              </MenuItem>
+            ))}
+          </Select>
+          {errors.cod_categoria && (
+            <FormHelperText>{errors.cod_categoria}</FormHelperText>
+          )}
+        </FormControl>
         <TextField
           label="Presupuesto"
           value={formData.presupuesto}

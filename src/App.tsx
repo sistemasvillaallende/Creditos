@@ -40,6 +40,7 @@ export type Credito = {
   saldo_adeudado: number;
   proximo_vencimiento: string;
   nombre: string; // Made non-optional as it's defaulted
+  cod_categoria?: number; // Nueva propiedad para la categoría
 }
 
 export type ResumenImporte = {
@@ -53,6 +54,13 @@ export type ResumenImporte = {
 }
 
 export type CreditoConResumen = Credito & Partial<ResumenImporte>;
+
+export type CategoriaDeuda = {
+  cod_categoria: number;
+  des_categoria: string;
+  id_subrubro: number;
+  tipo_deuda: number;
+}
 
 /**
  * Parses a date string that might be in "DD/MM/YYYY" format or an ISO format.
@@ -90,6 +98,7 @@ function App() {
   const { isAuthenticated, user } = useAuth();
   const [creditos, setCreditos] = useState<CreditoConResumen[]>([]); // Holds filtered data for display
   const [allCreditos, setAllCreditos] = useState<CreditoConResumen[]>([]); // Holds all fetched and merged data
+  const [categorias, setCategorias] = useState<CategoriaDeuda[]>([]); // Holds categorías data
   const [loading, setLoading] = useState(true);
   const [selectedCredito, setSelectedCredito] = useState<number | null>(null);
   const [openDetalleDeuda, setOpenDetalleDeuda] = useState(false);
@@ -163,13 +172,31 @@ function App() {
     }
   };
 
+  const fetchCategorias = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}CM_Cate_deuda/GetCategoriasDeuda`
+      );
+      setCategorias(response.data);
+    } catch (error) {
+      console.error('Error al cargar categorías:', error);
+    }
+  };
+
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
 
   useEffect(() => {
     fetchAllData();
+    fetchCategorias();
   }, []);
+
+  const getCategoriaName = (codCategoria: number | undefined): string => {
+    if (!codCategoria) return 'Sin categoría';
+    const categoria = categorias.find(c => c.cod_categoria === codCategoria);
+    return categoria ? categoria.des_categoria : 'Sin categoría';
+  };
 
   useEffect(() => {
     let filteredData = [...allCreditos];
@@ -293,7 +320,7 @@ function App() {
 
     // Definir los encabezados y el orden de las columnas explícitamente
     const headers = [
-      'ID', 'Legajo', 'Nombre', 'Domicilio', 'Fecha Alta', 'CUIT',
+      'ID', 'Legajo', 'Nombre', 'Domicilio', 'Fecha Alta', 'CUIT', 'Categoría',
       'Presupuesto ($)', 'Presupuesto UVA ($)', 'Cuotas', 'Estado Crédito',
       'Importe Adeudado ($)', 'Importe Pagado ($)', 'Importe Vencido ($)',
       'Cuotas Pagadas', 'Cuotas Vencidas', 'Fecha Último Pago'
@@ -308,17 +335,18 @@ function App() {
       const parsedFechaAlta = parsePossibleDateString(credito.fecha_alta);
       rowData[headers[4]] = parsedFechaAlta ? parsedFechaAlta.toLocaleDateString('es-AR') : '';
       rowData[headers[5]] = credito.cuit_solicitante;
-      rowData[headers[6]] = credito.presupuesto; // Exportar como número
-      rowData[headers[7]] = credito.presupuesto_uva; // Exportar como número
-      rowData[headers[8]] = credito.cant_cuotas;
-      rowData[headers[9]] = credito.baja ? 'BAJA' : 'VIGENTE';
-      rowData[headers[10]] = credito.imp_adeudado ?? null; // null para celdas vacías, Excel lo maneja bien
-      rowData[headers[11]] = credito.imp_pagado ?? null;
-      rowData[headers[12]] = credito.imp_vencido ?? null;
-      rowData[headers[13]] = credito.cuotas_pagadas ?? null;
-      rowData[headers[14]] = credito.cuotas_vencidas ?? null;
+      rowData[headers[6]] = getCategoriaName(credito.cod_categoria);
+      rowData[headers[7]] = credito.presupuesto; // Exportar como número
+      rowData[headers[8]] = credito.presupuesto_uva; // Exportar como número
+      rowData[headers[9]] = credito.cant_cuotas;
+      rowData[headers[10]] = credito.baja ? 'BAJA' : 'VIGENTE';
+      rowData[headers[11]] = credito.imp_adeudado ?? null; // null para celdas vacías, Excel lo maneja bien
+      rowData[headers[12]] = credito.imp_pagado ?? null;
+      rowData[headers[13]] = credito.imp_vencido ?? null;
+      rowData[headers[14]] = credito.cuotas_pagadas ?? null;
+      rowData[headers[15]] = credito.cuotas_vencidas ?? null;
       const parsedFechaUltimoPago = parsePossibleDateString(credito.fecha_ultimo_pago);
-      rowData[headers[15]] = parsedFechaUltimoPago ? parsedFechaUltimoPago.toLocaleDateString('es-AR') : 'N/P';
+      rowData[headers[16]] = parsedFechaUltimoPago ? parsedFechaUltimoPago.toLocaleDateString('es-AR') : 'N/P';
       return headers.map(header => rowData[header]); // Devuelve un array de valores en el orden de los headers
     });
 
@@ -366,6 +394,14 @@ function App() {
       field: 'cuit_solicitante',
       headerName: 'CUIT',
       width: 110
+    },
+    {
+      field: 'cod_categoria',
+      headerName: 'Categoría',
+      width: 150,
+      renderCell: (params) => {
+        return getCategoriaName(params.row.cod_categoria);
+      }
     },
     {
       field: 'presupuesto',

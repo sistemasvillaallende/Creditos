@@ -7,7 +7,12 @@ import {
   Button,
   TextField,
   Autocomplete,
-  Grid
+  Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText
 } from '@mui/material';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -22,6 +27,13 @@ interface BadecData {
   cuit: string;
 }
 
+interface CategoriaDeuda {
+  cod_categoria: number;
+  des_categoria: string;
+  id_subrubro: number;
+  tipo_deuda: number;
+}
+
 interface EditarCreditoProps {
   open: boolean;
   onClose: () => void;
@@ -32,7 +44,9 @@ interface EditarCreditoProps {
 export default function EditarCredito({ open, onClose, idCredito, onCreditoEditado }: EditarCreditoProps) {
   const { user } = useAuth();
   const [cuitOptions, setCuitOptions] = useState<BadecData[]>([]);
+  const [categorias, setCategorias] = useState<CategoriaDeuda[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedCuitOption, setSelectedCuitOption] = useState<BadecData | null>(null);
   const [formData, setFormData] = useState({
     legajo: '',
     domicilio: '',
@@ -41,6 +55,7 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
     presupuesto: '',
     presupuesto_uva: '',
     cant_cuotas: '',
+    cod_categoria: '',
     circunscripcion: '',
     seccion: '',
     manzana: '',
@@ -65,14 +80,28 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
     }
   };
 
+  const fetchCategorias = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}CM_Cate_deuda/GetCategoriasDeuda`
+      );
+      setCategorias(response.data);
+    } catch (error) {
+      console.error('Error al cargar categorías:', error);
+    }
+  };
+
   const handleCuitChange = (_: React.SyntheticEvent, newValue: BadecData | null) => {
     if (newValue) {
+      setSelectedCuitOption(newValue);
       setFormData({
         ...formData,
         cuit_solicitante: newValue.cuit,
         legajo: newValue.nro_bad.toString(),
         domicilio: `${newValue.nombre_calle} ${newValue.nro_dom}`
       });
+    } else {
+      setSelectedCuitOption(null);
     }
   };
 
@@ -86,6 +115,7 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
     if (!formData.presupuesto) newErrors.presupuesto = 'El presupuesto es obligatorio';
     if (!formData.presupuesto_uva) newErrors.presupuesto_uva = 'El presupuesto UVA es obligatorio';
     if (!formData.cant_cuotas) newErrors.cant_cuotas = 'La cantidad de cuotas es obligatoria';
+    if (!formData.cod_categoria) newErrors.cod_categoria = 'La categoría es obligatoria';
     if (!formData.circunscripcion) newErrors.circunscripcion = 'La circunscripción es obligatoria';
     if (!formData.seccion) newErrors.seccion = 'La sección es obligatoria';
     if (!formData.manzana) newErrors.manzana = 'La manzana es obligatoria';
@@ -105,6 +135,22 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
             `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/GetCreditoById?id_credito_materiales=${idCredito}`
           );
           const creditoData = response.data;
+
+          // Buscar los datos del CUIT para establecer la opción seleccionada
+          if (creditoData.cuit_solicitante) {
+            try {
+              const badecResponse = await axios.get(
+                `${import.meta.env.VITE_API_BASE_URL}Badec/GetBadecByCuit?cuit=${creditoData.cuit_solicitante}`
+              );
+              if (badecResponse.data && badecResponse.data.length > 0) {
+                setSelectedCuitOption(badecResponse.data[0]);
+                setCuitOptions(badecResponse.data);
+              }
+            } catch (error) {
+              console.error('Error al cargar datos del CUIT:', error);
+            }
+          }
+
           setFormData({
             legajo: creditoData.legajo.toString(),
             domicilio: creditoData.domicilio,
@@ -113,6 +159,7 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
             presupuesto: creditoData.presupuesto.toString(),
             presupuesto_uva: creditoData.presupuesto_uva.toString(),
             cant_cuotas: creditoData.cant_cuotas.toString(),
+            cod_categoria: creditoData.cod_categoria ? creditoData.cod_categoria.toString() : '',
             circunscripcion: creditoData.circunscripcion.toString(),
             seccion: creditoData.seccion.toString(),
             manzana: creditoData.manzana.toString(),
@@ -124,8 +171,32 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
         }
       }
     };
-    fetchCreditoData();
-  }, [idCredito]);
+
+    if (open) {
+      fetchCreditoData();
+      fetchCategorias();
+    } else {
+      // Limpiar estados cuando se cierre el modal
+      setSelectedCuitOption(null);
+      setCuitOptions([]);
+      setFormData({
+        legajo: '',
+        domicilio: '',
+        cuit_solicitante: '',
+        garantes: '',
+        presupuesto: '',
+        presupuesto_uva: '',
+        cant_cuotas: '',
+        cod_categoria: '',
+        circunscripcion: '',
+        seccion: '',
+        manzana: '',
+        parcela: '',
+        p_h: ''
+      });
+      setErrors({});
+    }
+  }, [open, idCredito]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -168,6 +239,7 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
             con_deuda: 0,
             saldo_adeudado: 0,
             proximo_vencimiento: new Date().toISOString(),
+            cod_categoria: parseInt(formData.cod_categoria),
             circunscripcion: parseInt(formData.circunscripcion),
             seccion: parseInt(formData.seccion),
             manzana: parseInt(formData.manzana),
@@ -209,7 +281,9 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
         <form onSubmit={handleSubmit}>
           <Autocomplete
             options={cuitOptions}
+            value={selectedCuitOption}
             getOptionLabel={(option) => `${option.cuit} - ${option.nombre}`}
+            isOptionEqualToValue={(option, value) => option.cuit === value.cuit}
             loading={loading}
             onInputChange={(_, newInputValue) => {
               fetchBadecData(newInputValue);
@@ -259,6 +333,30 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
                 error={!!errors.garantes}
                 helperText={errors.garantes}
               />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl
+                fullWidth
+                margin="normal"
+                error={!!errors.cod_categoria}
+              >
+                <InputLabel id="categoria-label">Categoría</InputLabel>
+                <Select
+                  labelId="categoria-label"
+                  value={formData.cod_categoria}
+                  label="Categoría"
+                  onChange={(e) => setFormData({ ...formData, cod_categoria: e.target.value })}
+                >
+                  {categorias.map((categoria) => (
+                    <MenuItem key={categoria.cod_categoria} value={categoria.cod_categoria.toString()}>
+                      {categoria.des_categoria}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {errors.cod_categoria && (
+                  <FormHelperText>{errors.cod_categoria}</FormHelperText>
+                )}
+              </FormControl>
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField

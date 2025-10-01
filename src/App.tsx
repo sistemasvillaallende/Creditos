@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import axios from 'axios';
-import { Container, Typography, IconButton, Box, Button, TextField, InputAdornment, Grid, Tooltip, FormControlLabel, Switch } from '@mui/material';
+import { Container, Typography, IconButton, Box, Button, TextField, InputAdornment, Grid, Tooltip, FormControlLabel, Switch, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -95,6 +95,49 @@ const parsePossibleDateString = (dateString: string | null | undefined): Date | 
 };
 
 function App() {
+  // Estado y handlers para actualización de UVA
+  const [openUvaModal, setOpenUvaModal] = useState(false);
+  const [nuevoValorUva, setNuevoValorUva] = useState('');
+  const [loadingUva, setLoadingUva] = useState(false);
+
+  const handleOpenUvaModal = () => {
+    setNuevoValorUva('');
+    setOpenUvaModal(true);
+  };
+
+  const handleCloseUvaModal = () => {
+    if (!loadingUva) setOpenUvaModal(false);
+  };
+
+  const handleActualizarUva = async () => {
+    if (!nuevoValorUva || isNaN(Number(nuevoValorUva))) {
+      Swal.fire('Error', 'Ingrese un valor numérico válido para el UVA', 'error');
+      return;
+    }
+    setLoadingUva(true);
+    try {
+      const payload = {
+        id_auditoria: 0,
+        fecha: new Date().toISOString(),
+        usuario: user?.nombre_completo || 'Usuario',
+        proceso: 'actualizacion_valor_uva',
+        identificacion: '',
+        autorizaciones: '',
+        observaciones: 'Actualización de valor UVA',
+        detalle: '',
+        ip: ''
+      };
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}CM_UVA/InsertValorUVA?valor_uva=${nuevoValorUva}`, payload);
+      Swal.fire('Éxito', 'El valor UVA fue actualizado correctamente', 'success').then(() => {
+        window.location.reload();
+      });
+      setOpenUvaModal(false);
+    } catch (error) {
+      Swal.fire('Error', 'No se pudo actualizar el valor UVA', 'error');
+    } finally {
+      setLoadingUva(false);
+    }
+  };
   const { isAuthenticated, user } = useAuth();
   const [creditos, setCreditos] = useState<CreditoConResumen[]>([]); // Holds filtered data for display
   const [allCreditos, setAllCreditos] = useState<CreditoConResumen[]>([]); // Holds all fetched and merged data
@@ -546,7 +589,7 @@ function App() {
       <Container maxWidth="xl" sx={{ mt: 4 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h4" component="h1">
-            Listado de Créditos
+            Créditos
           </Typography>
           <Box>
             <Tooltip title="Descargar listado en Excel" arrow sx={{ mr: 1 }}>
@@ -555,10 +598,49 @@ function App() {
                 color="success"
                 onClick={handleExportToExcel}
                 startIcon={<DownloadIcon />}
+                sx={{ mr: 1 }}
               >
-                Exportar Excel
+                Exportar
               </Button>
             </Tooltip>
+            <Tooltip title="Actualizar valor UVA" arrow>
+              <Button
+                variant="outlined"
+                color="info"
+                onClick={handleOpenUvaModal}
+                sx={{ mr: 1 }}
+                disabled={true}
+              >
+                Actualizar UVA
+              </Button>
+            </Tooltip>
+            {/* Modal para actualizar UVA */}
+            <Dialog open={openUvaModal} onClose={handleCloseUvaModal} maxWidth="xs" fullWidth>
+              <DialogTitle>Actualizar valor UVA</DialogTitle>
+              <DialogContent>
+                <TextField
+                  label="Nuevo valor UVA"
+                  value={nuevoValorUva}
+                  onChange={e => setNuevoValorUva(e.target.value)}
+                  type="number"
+                  fullWidth
+                  margin="normal"
+                  disabled={loadingUva}
+                />
+                {loadingUva && (
+                  <Box display="flex" alignItems="center" justifyContent="center" mt={2} mb={1}>
+                    <CircularProgress size={28} sx={{ mr: 2 }} />
+                    <Typography variant="body1">Se está ejecutando la operación, por favor espere...</Typography>
+                  </Box>
+                )}
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleCloseUvaModal} disabled={loadingUva}>Cancelar</Button>
+                <Button onClick={handleActualizarUva} variant="contained" color="primary" disabled={loadingUva}>
+                  Actualizar
+                </Button>
+              </DialogActions>
+            </Dialog>
             <Tooltip title="Crear un nuevo crédito" arrow>
               <Button
                 variant="contained"

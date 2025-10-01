@@ -196,12 +196,14 @@ function NuevoCredito({ open, onClose, onCreditoCreado }: NuevoCreditoProps) {
       try {
         const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}CM_UVA/GetValorUva`);
         if (Array.isArray(response.data) && response.data.length > 0) {
-          setValorUva(response.data[0].valor_uva);
+          const ultimo = response.data[response.data.length - 1];
+          setValorUva(ultimo.valor_uva);
         }
       } catch (error) {
         console.error('Error al obtener valor UVA:', error);
       }
     };
+
 
     fetchValorUva();
     fetchCategorias();

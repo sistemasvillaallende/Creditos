@@ -409,6 +409,60 @@ function App() {
     XLSX.writeFile(workbook, `ListadoCreditos_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
+  const handleExportAllToExcel = () => {
+    if (allCreditos.length === 0) {
+      Swal.fire('Nada que exportar', 'No hay datos disponibles.', 'info');
+      return;
+    }
+
+    // Definir los encabezados y el orden de las columnas explícitamente
+    const headers = [
+      'ID', 'Legajo', 'Nombre', 'Domicilio', 'Fecha Alta', 'CUIT', 'Categoría',
+      'Presupuesto ($)', 'Presupuesto UVA ($)', 'Cuotas', 'Estado Crédito',
+      'Importe Adeudado ($)', 'Importe Pagado ($)', 'Importe Vencido ($)',
+      'Cuotas Pagadas', 'Cuotas Vencidas', 'Fecha Último Pago'
+    ];
+
+    const dataToExport = allCreditos.map(credito => {
+      const rowData: { [key: string]: any } = {};
+      rowData[headers[0]] = credito.id_credito_materiales;
+      rowData[headers[1]] = credito.legajo;
+      rowData[headers[2]] = credito.nombre || 'Sin nombre';
+      rowData[headers[3]] = credito.domicilio;
+      const parsedFechaAlta = parsePossibleDateString(credito.fecha_alta);
+      rowData[headers[4]] = parsedFechaAlta ? parsedFechaAlta.toLocaleDateString('es-AR') : '';
+      rowData[headers[5]] = credito.cuit_solicitante;
+      rowData[headers[6]] = getCategoriaName(credito.cod_categoria);
+      rowData[headers[7]] = credito.presupuesto; // Exportar como número
+      rowData[headers[8]] = credito.presupuesto_uva; // Exportar como número
+      rowData[headers[9]] = credito.cant_cuotas;
+      rowData[headers[10]] = credito.baja ? 'BAJA' : 'VIGENTE';
+      rowData[headers[11]] = credito.imp_adeudado ?? null; // null para celdas vacías, Excel lo maneja bien
+      rowData[headers[12]] = credito.imp_pagado ?? null;
+      rowData[headers[13]] = credito.imp_vencido ?? null;
+      rowData[headers[14]] = credito.cuotas_pagadas ?? null;
+      rowData[headers[15]] = credito.cuotas_vencidas ?? null;
+      const parsedFechaUltimoPago = parsePossibleDateString(credito.fecha_ultimo_pago);
+      rowData[headers[16]] = parsedFechaUltimoPago ? parsedFechaUltimoPago.toLocaleDateString('es-AR') : 'N/P';
+      return headers.map(header => rowData[header]); // Devuelve un array de valores en el orden de los headers
+    });
+
+    // Crear la hoja de cálculo usando aoa_to_sheet para mantener el orden y manejar celdas vacías
+    const worksheetData = [headers, ...dataToExport];
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+
+    // Ajustar anchos de columnas (opcional pero recomendado)
+    const colWidths = headers.map((header, i) => ({
+      wch: Math.max(header.length, ...worksheetData.slice(1).map(dataRow => (dataRow[i]?.toString() ?? '').length)) + 2
+    }));
+    worksheet['!cols'] = colWidths;
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Creditos_Completos');
+
+    XLSX.writeFile(workbook, `ListadoCreditosCompleto_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
   const columns: GridColDef[] = [
     {
       field: 'legajo',
@@ -592,7 +646,7 @@ function App() {
             Créditos
           </Typography>
           <Box>
-            <Tooltip title="Descargar listado en Excel" arrow sx={{ mr: 1 }}>
+            <Tooltip title="Descargar listado filtrado en Excel" arrow sx={{ mr: 1 }}>
               <Button
                 variant="outlined"
                 color="success"
@@ -603,13 +657,24 @@ function App() {
                 Exportar
               </Button>
             </Tooltip>
+            <Tooltip title="Descargar listado completo en Excel" arrow sx={{ mr: 1 }}>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={handleExportAllToExcel}
+                startIcon={<DownloadIcon />}
+                sx={{ mr: 1 }}
+              >
+                Exportar Todo
+              </Button>
+            </Tooltip>
             <Tooltip title="Actualizar valor UVA" arrow>
               <Button
                 variant="outlined"
                 color="info"
                 onClick={handleOpenUvaModal}
                 sx={{ mr: 1 }}
-                disabled={true}
+                disabled={loadingUva}
               >
                 Actualizar UVA
               </Button>

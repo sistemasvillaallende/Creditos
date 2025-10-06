@@ -452,14 +452,6 @@ function App() {
       width: 110
     },
     {
-      field: 'cod_categoria',
-      headerName: 'Categoría',
-      width: 150,
-      renderCell: (params) => {
-        return getCategoriaName(params.row.cod_categoria);
-      }
-    },
-    {
       field: 'presupuesto',
       headerName: 'Presupuesto',
       width: 120,

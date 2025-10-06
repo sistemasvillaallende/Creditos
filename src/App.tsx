@@ -57,7 +57,7 @@ function App() {
   // Estado y handlers para actualización de UVA
   const [openUvaModal, setOpenUvaModal] = useState(false);
   const [nuevoValorUva, setNuevoValorUva] = useState('');
-  const [loadingUva, setLoadingUva] = useState(false);
+  const [loadingUva, setLoadingUva] = useState(true);
 
   const handleOpenUvaModal = () => {
     setNuevoValorUva('');

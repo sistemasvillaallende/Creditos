@@ -128,6 +128,7 @@ function App() {
       });
       setOpenUvaModal(false);
     } catch (error) {
+      console.error('Error al actualizar el valor UVA:', error);
       Swal.fire('Error', 'No se pudo actualizar el valor UVA', 'error');
     } finally {
       setLoadingUva(false);

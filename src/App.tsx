@@ -57,15 +57,44 @@ function App() {
   // Estado y handlers para actualización de UVA
   const [openUvaModal, setOpenUvaModal] = useState(false);
   const [nuevoValorUva, setNuevoValorUva] = useState('');
-  const [loadingUva, setLoadingUva] = useState(true);
+  const [observacionesUva, setObservacionesUva] = useState('');
+  const [loadingUva, setLoadingUva] = useState(false);
+  const [loadingValorUva, setLoadingValorUva] = useState(false);
+
+  const fetchValorUvaActual = async () => {
+    setLoadingValorUva(true);
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}CM_UVA/GetValorUva`);
+      if (Array.isArray(response.data) && response.data.length > 0) {
+        setNuevoValorUva(response.data[0].valor_uva.toString());
+      }
+    } catch (error) {
+      console.error('Error al obtener valor UVA:', error);
+      Swal.fire('Error', 'No se pudo obtener el valor actual del UVA', 'error');
+    } finally {
+      setLoadingValorUva(false);
+    }
+  };
 
   const handleOpenUvaModal = () => {
     setNuevoValorUva('');
+    setObservacionesUva('');
     setOpenUvaModal(true);
+    fetchValorUvaActual();
   };
 
   const handleCloseUvaModal = () => {
     if (!loadingUva) setOpenUvaModal(false);
+  };
+
+  const getClientIP = async (): Promise<string> => {
+    try {
+      const response = await fetch('https://api.ipify.org?format=json');
+      const data = await response.json();
+      return data.ip || 'No disponible';
+    } catch (error) {
+      return 'No disponible';
+    }
   };
 
   const handleActualizarUva = async () => {
@@ -73,18 +102,25 @@ function App() {
       Swal.fire('Error', 'Ingrese un valor numérico válido para el UVA', 'error');
       return;
     }
+
+    if (!observacionesUva.trim()) {
+      Swal.fire('Error', 'Las observaciones son obligatorias', 'error');
+      return;
+    }
+
     setLoadingUva(true);
     try {
+      const clientIP = await getClientIP();
       const payload = {
         id_auditoria: 0,
         fecha: new Date().toISOString(),
         usuario: user?.nombre_completo || 'Usuario',
-        proceso: 'actualizacion_valor_uva',
-        identificacion: '',
-        autorizaciones: '',
-        observaciones: 'Actualización de valor UVA',
-        detalle: '',
-        ip: ''
+        proceso: 'Actualizacion de UVA',
+        identificacion: 'string',
+        autorizaciones: 'string',
+        observaciones: observacionesUva,
+        detalle: 'string',
+        ip: clientIP
       };
       await axios.post(`${import.meta.env.VITE_API_BASE_URL}CM_UVA/InsertValorUVA?valor_uva=${nuevoValorUva}`, payload);
       Swal.fire('Éxito', 'El valor UVA fue actualizado correctamente', 'success').then(() => {
@@ -625,24 +661,45 @@ function App() {
                 color="info"
                 onClick={handleOpenUvaModal}
                 sx={{ mr: 1 }}
-                disabled={loadingUva}
               >
                 Actualizar UVA
               </Button>
             </Tooltip>
             {/* Modal para actualizar UVA */}
-            <Dialog open={openUvaModal} onClose={handleCloseUvaModal} maxWidth="xs" fullWidth>
+            <Dialog open={openUvaModal} onClose={handleCloseUvaModal} maxWidth="sm" fullWidth>
               <DialogTitle>Actualizar valor UVA</DialogTitle>
               <DialogContent>
-                <TextField
-                  label="Nuevo valor UVA"
-                  value={nuevoValorUva}
-                  onChange={e => setNuevoValorUva(e.target.value)}
-                  type="number"
-                  fullWidth
-                  margin="normal"
-                  disabled={loadingUva}
-                />
+                {loadingValorUva ? (
+                  <Box display="flex" alignItems="center" justifyContent="center" py={4}>
+                    <CircularProgress size={28} sx={{ mr: 2 }} />
+                    <Typography variant="body1">Cargando valor actual del UVA...</Typography>
+                  </Box>
+                ) : (
+                  <>
+                    <TextField
+                      label="Valor UVA"
+                      value={nuevoValorUva}
+                      onChange={e => setNuevoValorUva(e.target.value)}
+                      type="number"
+                      fullWidth
+                      margin="normal"
+                      disabled={loadingUva}
+                      helperText="Valor actual del UVA que será actualizado"
+                    />
+                    <TextField
+                      label="Observaciones"
+                      value={observacionesUva}
+                      onChange={e => setObservacionesUva(e.target.value)}
+                      multiline
+                      rows={3}
+                      fullWidth
+                      margin="normal"
+                      disabled={loadingUva}
+                      required
+                      helperText="Ingrese el motivo de la actualización del valor UVA"
+                    />
+                  </>
+                )}
                 {loadingUva && (
                   <Box display="flex" alignItems="center" justifyContent="center" mt={2} mb={1}>
                     <CircularProgress size={28} sx={{ mr: 2 }} />
@@ -651,8 +708,13 @@ function App() {
                 )}
               </DialogContent>
               <DialogActions>
-                <Button onClick={handleCloseUvaModal} disabled={loadingUva}>Cancelar</Button>
-                <Button onClick={handleActualizarUva} variant="contained" color="primary" disabled={loadingUva}>
+                <Button onClick={handleCloseUvaModal} disabled={loadingUva || loadingValorUva}>Cancelar</Button>
+                <Button
+                  onClick={handleActualizarUva}
+                  variant="contained"
+                  color="primary"
+                  disabled={loadingUva || loadingValorUva || !nuevoValorUva || !observacionesUva.trim()}
+                >
                   Actualizar
                 </Button>
               </DialogActions>

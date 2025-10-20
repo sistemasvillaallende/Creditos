@@ -110,26 +110,10 @@ function Cedulon({ open, onClose, nroCedulon }: CedulonProps) {
         displayValue: false
       });
 
-      // Agregar código de barras en la esquina superior derecha
-      // const barcodeWidth = 60;
-      // const barcodeHeight = 25;
-      // doc.addImage(
-      //   canvas.toDataURL(),
-      //   'PNG',
-      //   doc.internal.pageSize.width - barcodeWidth - 15,
-      //   10,
-      //   barcodeWidth,
-      //   barcodeHeight
-      // );
-
-      // // Número de cedulón
-      // doc.setFontSize(9);
-      // doc.text(
-      //   `Cedulón # ${nroCedulon}`,
-      //   doc.internal.pageSize.width - barcodeWidth - 10,
-      //   40,
-      //   { align: 'left' }
-      // );
+      // Número de cedulón
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text(`Cedulón #${nroCedulon}`, 15, 40);
 
       // Datos del contribuyente
       doc.setFont('helvetica');

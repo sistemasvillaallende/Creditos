@@ -265,51 +265,147 @@ function App() {
   }, [searchTerm, filterConDeudaImp, allCreditos]);
 
   const handleDelete = async (legajo: number, id_credito_materiales: number) => {
-    const { value: observaciones } = await Swal.fire({
-      title: '¿Está seguro de eliminar este crédito?',
-      text: "Esta acción no se puede deshacer",
+    console.log('🔴 DEPURAR: handleDelete ejecutándose con:', { legajo, id_credito_materiales });
+
+    // Primer modal: seleccionar acción
+    const actionResult = await Swal.fire({
+      title: 'ATENCIÓN',
+      html: `
+        <div style="text-align: left; margin: 20px 0;">
+          <p style="color: #d32f2f; font-weight: bold;">⚠️ Sea muy cuidadoso con su selección</p>
+        </div>
+      `,
       icon: 'warning',
-      input: 'text',
-      inputLabel: 'Auditoría',
-      inputPlaceholder: 'Ingrese el motivo de la eliminación',
       showCancelButton: true,
-      confirmButtonColor: '#d33',
+      showDenyButton: true,
+      confirmButtonColor: 'rgba(255, 123, 0, 1)',
+      denyButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-      inputValidator: (value) => {
-        if (!value) {
-          return 'Debe ingresar un motivo para la eliminación';
-        }
-        return null;
-      }
+      confirmButtonText: 'DAR DE BAJA',
+      denyButtonText: 'ELIMINAR',
+      cancelButtonText: 'Cancelar'
     });
 
-    if (observaciones) {
-      try {
-        await axios.put(
-          `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/BajaCredito?legajo=${legajo}&id_credito_materiales=${id_credito_materiales}`,
-          createAuditoriaData(
-            'baja_credito',
-            observaciones,
-            user?.nombre_completo || 'Usuario no identificado'
-          )
-        );
+    console.log('🔴 DEPURAR: Resultado del primer modal:', actionResult);
 
-        Swal.fire(
-          'Eliminado',
-          'El crédito ha sido eliminado correctamente',
-          'success'
-        );
+    if (actionResult.isConfirmed) {
+      // DAR DE BAJA - Pedir motivo
+      const { value: motivoBaja } = await Swal.fire({
+        title: 'Motivo para dar de baja',
+        input: 'text',
+        inputLabel: 'Motivo (OBLIGATORIO)',
+        inputPlaceholder: 'Escriba detalladamente el motivo de la baja',
+        showCancelButton: true,
+        confirmButtonText: 'Dar de Baja',
+        cancelButtonText: 'Cancelar',
+        inputValidator: (value) => {
+          if (!value || value.trim().length < 10) {
+            return 'Debe ingresar un motivo detallado (mínimo 10 caracteres)';
+          }
+          return null;
+        }
+      });
 
-        fetchAllData(); // Actualizar la tabla
-      } catch (error) {
-        console.error('Error al eliminar el crédito:', error);
-        Swal.fire(
-          'Error',
-          'Hubo un error al eliminar el crédito',
-          'error'
-        );
+      if (motivoBaja) {
+        try {
+          await axios.put(
+            `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/BajaCredito?legajo=${legajo}&id_credito_materiales=${id_credito_materiales}`,
+            createAuditoriaData(
+              'baja_credito',
+              motivoBaja,
+              user?.nombre_completo || 'Usuario no identificado'
+            )
+          );
+
+          Swal.fire(
+            'Crédito dado de baja',
+            'El crédito ha sido dado de baja correctamente',
+            'success'
+          );
+
+          fetchAllData();
+        } catch (error) {
+          console.error('Error al dar de baja el crédito:', error);
+          Swal.fire(
+            'Error',
+            'Hubo un error al dar de baja el crédito',
+            'error'
+          );
+        }
+      }
+    } else if (actionResult.isDenied) {
+      // ELIMINAR DEFINITIVAMENTE - Pedir motivo
+      const { value: motivoEliminacion } = await Swal.fire({
+        title: 'Motivo para eliminación definitiva',
+        html: `
+          <div style="color: #d32f2f; margin-bottom: 15px;">
+            <strong>⚠️ ATENCIÓN: Esta acción es IRREVERSIBLE</strong>
+          </div>
+        `,
+        input: 'text',
+        inputLabel: 'Motivo (OBLIGATORIO)',
+        inputPlaceholder: 'Escriba detalladamente el motivo de la eliminación',
+        showCancelButton: true,
+        confirmButtonText: 'Continuar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#d33',
+        inputValidator: (value) => {
+          if (!value || value.trim().length < 10) {
+            return 'Debe ingresar un motivo detallado (mínimo 10 caracteres)';
+          }
+          return null;
+        }
+      });
+
+      if (motivoEliminacion) {
+        console.log('🔴 DEPURAR: Entrando en eliminación definitiva');
+        console.log('🔴 DEPURAR: motivoEliminacion:', motivoEliminacion);
+        const confirmDelete = await Swal.fire({
+          title: '🚨 CONFIRMACIÓN CRÍTICA 🚨',
+          html: `
+          <div style="text-align: center; margin: 20px 0; padding: 20px; background-color: #ffebee; border-radius: 8px;">
+            <h3 style="color: #d32f2f; margin-bottom: 15px;">⚠️ ELIMINACIÓN PERMANENTE ⚠️</h3>
+            <p style="font-size: 16px; color: #d32f2f; font-weight: bold;">
+              Esta acción es IRREVERSIBLE y eliminará PERMANENTEMENTE:
+            </p>
+          </div>
+        `,
+          icon: 'error',
+          showCancelButton: true,
+          confirmButtonColor: '#d32f2f',
+          cancelButtonColor: '#2e7d32',
+          confirmButtonText: 'SÍ',
+          cancelButtonText: 'NO',
+          allowOutsideClick: false,
+          allowEscapeKey: false
+        });
+
+        console.log('🔴 DEPURAR: confirmDelete result:', confirmDelete);
+        if (confirmDelete.isConfirmed) {
+          console.log('🔴 DEPURAR: Usuario confirmó eliminación definitiva');
+          try {
+            console.log('🔴 DEPURAR: Ejecutando DELETE request...');
+            const deleteUrl = `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/EliminarCredito?legajo=${legajo}&id_credito_materiales=${id_credito_materiales}`;
+            console.log('🔴 DEPURAR: URL DELETE:', deleteUrl);
+            await axios.delete(deleteUrl);
+            console.log('🔴 DEPURAR: DELETE request exitoso');
+
+            Swal.fire(
+              'Crédito eliminado',
+              'El crédito ha sido eliminado permanentemente',
+              'success'
+            );
+
+            fetchAllData(); // Actualizar la tabla
+          } catch (error) {
+            console.error('Error al eliminar el crédito:', error);
+            Swal.fire(
+              'Error',
+              'Hubo un error al eliminar permanentemente el crédito',
+              'error'
+            );
+          }
+        }
       }
     }
   };

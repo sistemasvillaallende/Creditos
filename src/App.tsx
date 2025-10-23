@@ -174,6 +174,7 @@ function App() {
       let resumenesData: ResumenImporte[] = [];
       if (Array.isArray(resumenesResponse.data)) {
         resumenesData = resumenesResponse.data.map((r: any) => ({
+          id_credito_materiales: Number(r.id_credito_materiales),
           legajo: Number(r.legajo),
           imp_pagado: Number(r.imp_pagado),
           imp_adeudado: Number(r.imp_adeudado),
@@ -185,10 +186,10 @@ function App() {
       }
 
       const resumenesMap = new Map<number, ResumenImporte>();
-      resumenesData.forEach(resumen => resumenesMap.set(resumen.legajo, resumen));
+      resumenesData.forEach(resumen => resumenesMap.set(resumen.id_credito_materiales, resumen));
 
       const mergedCreditos: CreditoConResumen[] = fetchedCreditos.map(credito => {
-        const resumen = resumenesMap.get(credito.legajo);
+        const resumen = resumenesMap.get(credito.id_credito_materiales);
         return {
           ...credito,
           ...(resumen ? {
@@ -575,6 +576,11 @@ function App() {
   };
 
   const columns: GridColDef[] = [
+    {
+      field: 'id_credito_materiales',
+      headerName: 'ID',
+      width: 60
+    },
     {
       field: 'legajo',
       headerName: 'Legajo',

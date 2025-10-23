@@ -22,6 +22,7 @@ export type Credito = {
 }
 
 export type ResumenImporte = {
+  id_credito_materiales: number;
   legajo: number;
   imp_pagado: number;
   imp_adeudado: number;

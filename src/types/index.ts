@@ -19,6 +19,7 @@ export type Credito = {
   proximo_vencimiento: string;
   nombre: string; // Made non-optional as it's defaulted
   cod_categoria?: number; // Nueva propiedad para la categoría
+  cod_rubro?: number; // Nueva propiedad para el rubro
 }
 
 export type ResumenImporte = {
@@ -37,6 +38,14 @@ export type CreditoConResumen = Credito & Partial<ResumenImporte>;
 export type CategoriaDeuda = {
   cod_categoria: number;
   des_categoria: string;
+  id_subrubro: number;
+  tipo_deuda: number;
+}
+
+export type RubroCredito = {
+  cod_rubro: number;
+  descripcion: string;
+  rubro: string;
   id_subrubro: number;
   tipo_deuda: number;
 }

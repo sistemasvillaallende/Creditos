@@ -24,6 +24,7 @@ interface DetalleDeudaProps {
   proximoVencimiento: string;
   saldoAdeudado: number;
   valorCuotaUva: number;
+  rubro?: string;
 }
 
 interface Deuda {
@@ -42,7 +43,7 @@ interface Deuda {
   nro_proc: number;
 }
 
-function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proximoVencimiento, saldoAdeudado, valorCuotaUva }: DetalleDeudaProps) {
+function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proximoVencimiento, saldoAdeudado, valorCuotaUva, rubro }: DetalleDeudaProps) {
 
   const [deudas, setDeudas] = useState<Deuda[]>([]);
   const [loading, setLoading] = useState(false);
@@ -244,6 +245,7 @@ function DetalleDeuda({ open, onClose, idCredito, legajo, cuit, garantes, proxim
               <Typography><strong>Legajo:</strong> {legajo}</Typography>
               <Typography><strong>CUIT:</strong> {cuit}</Typography>
               <Typography><strong>Garantes:</strong> {garantes}</Typography>
+              <Typography><strong>Rubro:</strong> {rubro || 'Sin rubro'}</Typography>
             </Grid>
             <Grid item xs={12} md={6}>
               <Typography><strong>Próximo Vencimiento:</strong> {formatVencimiento(proximoVencimiento)}</Typography>

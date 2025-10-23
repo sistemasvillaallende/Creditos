@@ -19,7 +19,7 @@ import AccessDenied from './components/AccessDenied';
 import { createAuditoriaData } from './utils/auditoria';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import CuentaCorriente from './components/CuentaCorriente';
-import { Credito, ResumenImporte, CreditoConResumen, CategoriaDeuda } from './types';
+import { Credito, ResumenImporte, CreditoConResumen, CategoriaDeuda, RubroCredito } from './types';
 
 /**
  * Parses a date string that might be in "DD/MM/YYYY" format or an ISO format.
@@ -138,6 +138,7 @@ function App() {
   const [creditos, setCreditos] = useState<CreditoConResumen[]>([]); // Holds filtered data for display
   const [allCreditos, setAllCreditos] = useState<CreditoConResumen[]>([]); // Holds all fetched and merged data
   const [categorias, setCategorias] = useState<CategoriaDeuda[]>([]); // Holds categorías data
+  const [rubros, setRubros] = useState<RubroCredito[]>([]); // Holds rubros data
   const [loading, setLoading] = useState(true);
   const [selectedCredito, setSelectedCredito] = useState<number | null>(null);
   const [openDetalleDeuda, setOpenDetalleDeuda] = useState(false);
@@ -148,6 +149,7 @@ function App() {
   const [selectedValorCuotaUva, setSelectedValorCuotaUva] = useState<number>(0);
   const [selectedLegajo, setSelectedLegajo] = useState<number>(0);
   const [selectedCuit, setSelectedCuit] = useState<string>('');
+  const [selectedRubro, setSelectedRubro] = useState<string>('');
   const [openEditarCredito, setOpenEditarCredito] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [openCuentaCorriente, setOpenCuentaCorriente] = useState(false);
@@ -223,6 +225,17 @@ function App() {
     }
   };
 
+  const fetchRubros = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}CM_rubros_credito/GetRubros`
+      );
+      setRubros(response.data);
+    } catch (error) {
+      console.error('Error al cargar rubros:', error);
+    }
+  };
+
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
   };
@@ -230,12 +243,19 @@ function App() {
   useEffect(() => {
     fetchAllData();
     fetchCategorias();
+    fetchRubros();
   }, []);
 
   const getCategoriaName = (codCategoria: number | undefined): string => {
     if (!codCategoria) return 'Sin categoría';
     const categoria = categorias.find(c => c.cod_categoria === codCategoria);
     return categoria ? categoria.des_categoria : 'Sin categoría';
+  };
+
+  const getRubroName = (codRubro: number | undefined): string => {
+    if (!codRubro) return 'Sin rubro';
+    const rubro = rubros.find(r => r.cod_rubro === codRubro);
+    return rubro ? rubro.rubro : 'Sin rubro';
   };
 
   useEffect(() => {
@@ -694,6 +714,7 @@ function App() {
                   setSelectedVencimiento(params.row.proximo_vencimiento);
                   setSelectedSaldoAdeudado(currentCreditoRow.imp_adeudado ?? currentCreditoRow.saldo_adeudado ?? 0);
                   setSelectedValorCuotaUva(currentCreditoRow.valor_cuota_uva);
+                  setSelectedRubro(getRubroName(params.row.cod_rubro));
                 }}
                 color="primary"
               >
@@ -908,6 +929,7 @@ function App() {
           proximoVencimiento={selectedVencimiento || ''}
           saldoAdeudado={selectedSaldoAdeudado || 0}
           valorCuotaUva={selectedValorCuotaUva || 0}
+          rubro={selectedRubro || ''}
         />
         <NuevoCredito
           open={openNuevoCredito}

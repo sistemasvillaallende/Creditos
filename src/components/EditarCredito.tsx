@@ -34,6 +34,22 @@ interface CategoriaDeuda {
   tipo_deuda: number;
 }
 
+interface RubroCredito {
+  cod_rubro: number;
+  descripcion: string;
+  rubro: string;
+  id_subrubro: number;
+  tipo_deuda: number;
+}
+
+interface RubroCredito {
+  cod_rubro: number;
+  descripcion: string;
+  rubro: string;
+  id_subrubro: number;
+  tipo_deuda: number;
+}
+
 interface EditarCreditoProps {
   open: boolean;
   onClose: () => void;
@@ -45,6 +61,7 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
   const { user } = useAuth();
   const [cuitOptions, setCuitOptions] = useState<BadecData[]>([]);
   const [categorias, setCategorias] = useState<CategoriaDeuda[]>([]);
+  const [rubros, setRubros] = useState<RubroCredito[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCuitOption, setSelectedCuitOption] = useState<BadecData | null>(null);
   const [formData, setFormData] = useState({
@@ -56,6 +73,7 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
     presupuesto_uva: '',
     cant_cuotas: '',
     cod_categoria: '',
+    cod_rubro: '',
     circunscripcion: '',
     seccion: '',
     manzana: '',
@@ -91,6 +109,17 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
     }
   };
 
+  const fetchRubros = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}CM_rubros_credito/GetRubros`
+      );
+      setRubros(response.data);
+    } catch (error) {
+      console.error('Error al cargar rubros:', error);
+    }
+  };
+
   const handleCuitChange = (_: React.SyntheticEvent, newValue: BadecData | null) => {
     if (newValue) {
       setSelectedCuitOption(newValue);
@@ -116,6 +145,7 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
     if (!formData.presupuesto_uva) newErrors.presupuesto_uva = 'El presupuesto UVA es obligatorio';
     if (!formData.cant_cuotas) newErrors.cant_cuotas = 'La cantidad de cuotas es obligatoria';
     if (!formData.cod_categoria) newErrors.cod_categoria = 'La categoría es obligatoria';
+    if (!formData.cod_rubro) newErrors.cod_rubro = 'El rubro es obligatorio';
     if (!formData.circunscripcion) newErrors.circunscripcion = 'La circunscripción es obligatoria';
     if (!formData.seccion) newErrors.seccion = 'La sección es obligatoria';
     if (!formData.manzana) newErrors.manzana = 'La manzana es obligatoria';
@@ -160,6 +190,7 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
             presupuesto_uva: creditoData.presupuesto_uva.toString(),
             cant_cuotas: creditoData.cant_cuotas.toString(),
             cod_categoria: creditoData.cod_categoria ? creditoData.cod_categoria.toString() : '',
+            cod_rubro: creditoData.cod_rubro ? creditoData.cod_rubro.toString() : '',
             circunscripcion: creditoData.circunscripcion.toString(),
             seccion: creditoData.seccion.toString(),
             manzana: creditoData.manzana.toString(),
@@ -175,6 +206,7 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
     if (open) {
       fetchCreditoData();
       fetchCategorias();
+      fetchRubros();
     } else {
       // Limpiar estados cuando se cierre el modal
       setSelectedCuitOption(null);
@@ -188,6 +220,7 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
         presupuesto_uva: '',
         cant_cuotas: '',
         cod_categoria: '',
+        cod_rubro: '',
         circunscripcion: '',
         seccion: '',
         manzana: '',
@@ -240,6 +273,7 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
             saldo_adeudado: 0,
             proximo_vencimiento: new Date().toISOString(),
             cod_categoria: parseInt(formData.cod_categoria),
+            cod_rubro: parseInt(formData.cod_rubro),
             circunscripcion: parseInt(formData.circunscripcion),
             seccion: parseInt(formData.seccion),
             manzana: parseInt(formData.manzana),
@@ -355,6 +389,30 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
                 </Select>
                 {errors.cod_categoria && (
                   <FormHelperText>{errors.cod_categoria}</FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl
+                fullWidth
+                margin="normal"
+                error={!!errors.cod_rubro}
+              >
+                <InputLabel id="rubro-label">Rubro</InputLabel>
+                <Select
+                  labelId="rubro-label"
+                  value={formData.cod_rubro}
+                  label="Rubro"
+                  onChange={(e) => setFormData({ ...formData, cod_rubro: e.target.value })}
+                >
+                  {rubros.map((rubro) => (
+                    <MenuItem key={rubro.cod_rubro} value={rubro.cod_rubro.toString()}>
+                      {rubro.rubro}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {errors.cod_rubro && (
+                  <FormHelperText>{errors.cod_rubro}</FormHelperText>
                 )}
               </FormControl>
             </Grid>

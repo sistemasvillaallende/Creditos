@@ -387,7 +387,26 @@ function App() {
             console.log('🔴 DEPURAR: Ejecutando DELETE request...');
             const deleteUrl = `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/EliminarCredito?legajo=${legajo}&id_credito_materiales=${id_credito_materiales}`;
             console.log('🔴 DEPURAR: URL DELETE:', deleteUrl);
-            await axios.delete(deleteUrl);
+
+            const clientIP = await getClientIP();
+            const auditoriaData = {
+              id_auditoria: 0,
+              fecha: new Date().toISOString(),
+              usuario: user?.nombre_completo || 'Usuario no identificado',
+              proceso: 'eliminacion de credito',
+              identificacion: 'string',
+              autorizaciones: 'string',
+              observaciones: motivoEliminacion,
+              detalle: `Eliminación de crédito - Legajo: ${legajo}, ID Crédito: ${id_credito_materiales}, Motivo: ${motivoEliminacion}`,
+              ip: clientIP
+            };
+
+            await axios.delete(deleteUrl, {
+              data: auditoriaData,
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
             console.log('🔴 DEPURAR: DELETE request exitoso');
 
             Swal.fire(

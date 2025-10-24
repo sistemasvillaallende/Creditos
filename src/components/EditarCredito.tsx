@@ -144,7 +144,7 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
     if (!formData.presupuesto) newErrors.presupuesto = 'El presupuesto es obligatorio';
     if (!formData.presupuesto_uva) newErrors.presupuesto_uva = 'El presupuesto UVA es obligatorio';
     if (!formData.cant_cuotas) newErrors.cant_cuotas = 'La cantidad de cuotas es obligatoria';
-    if (!formData.cod_categoria) newErrors.cod_categoria = 'La categoría es obligatoria';
+    // if (!formData.cod_categoria) newErrors.cod_categoria = 'La categoría es obligatoria'; // Campo no obligatorio
     if (!formData.cod_rubro) newErrors.cod_rubro = 'El rubro es obligatorio';
     if (!formData.circunscripcion) newErrors.circunscripcion = 'La circunscripción es obligatoria';
     if (!formData.seccion) newErrors.seccion = 'La sección es obligatoria';
@@ -272,7 +272,7 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
             con_deuda: 0,
             saldo_adeudado: 0,
             proximo_vencimiento: new Date().toISOString(),
-            cod_categoria: parseInt(formData.cod_categoria),
+            cod_categoria: formData.cod_categoria ? parseInt(formData.cod_categoria) : null,
             cod_rubro: parseInt(formData.cod_rubro),
             circunscripcion: parseInt(formData.circunscripcion),
             seccion: parseInt(formData.seccion),

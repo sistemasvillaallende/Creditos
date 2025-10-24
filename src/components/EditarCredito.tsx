@@ -249,7 +249,7 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
         console.error('Error al obtener nombre por CUIT:', error);
       }
 
-      await axios.put(
+      const response = await axios.put(
         `${import.meta.env.VITE_API_BASE_URL}CM_Credito_materiales/UpdateCredito?legajo=${formData.legajo}&id_credito_materiales=${idCredito}`,
         {
           creditoMateriales: {
@@ -288,9 +288,20 @@ export default function EditarCredito({ open, onClose, idCredito, onCreditoEdita
         }
       );
 
+      // Verificar si la respuesta contiene un mensaje específico
+      const responseData = response.data;
+      let successMessage = 'El crédito ha sido actualizado correctamente';
+
+      if (responseData && responseData.message) {
+        successMessage = responseData.message;
+        if (responseData.nota) {
+          successMessage += `\n\nNota: ${responseData.nota}`;
+        }
+      }
+
       Swal.fire({
         title: 'Éxito',
-        text: 'El crédito ha sido actualizado correctamente',
+        text: successMessage,
         icon: 'success',
         confirmButtonText: 'Aceptar'
       });
